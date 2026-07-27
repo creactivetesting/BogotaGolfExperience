@@ -1,0 +1,74 @@
+// This is your Prisma schema file for BGX.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Ambassador {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  code      String   @unique
+  commissionRate Float @default(10)
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+}
+
+model GolfPlan {
+  id          String   @id @default(cuid())
+  name        String
+  basePrice   Float
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model Testimonial {
+  id         String   @id @default(cuid())
+  golferName String
+  reviewText String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model GolfCourse {
+  id          String   @id @default(cuid())
+  name        String
+  isAvailable Boolean  @default(true)
+  homeFeatured Boolean @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model GeneratedQuote {
+  id                  String   @id @default(cuid())
+  customerName        String
+  planName            String
+  packageSubtitle     String?
+  packageDuration     String?
+  playerCount         Int
+  ambassadorName      String?
+  ambassadorCode      String?
+  subtotal            Float
+  commission          Float
+  netMargin           Float
+  selectedCoursesJson String
+  includedItemsJson   String
+  status              String   @default("PENDING")
+  createdAt           DateTime @default(now())
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String
+  content     String
+  coverImage  String?
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

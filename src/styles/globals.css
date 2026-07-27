@@ -1,0 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --font-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Golf & Bogotá inspired color palette */
+  --background: #f8faf6; /* Soft grass green background */
+  --foreground: #1a2e1a; /* Deep forest green */
+  --card: #ffffff;
+  --card-foreground: #1a2e1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a2e1a;
+  --primary: #2d5a2d; /* Golf course green */
+  --primary-foreground: #ffffff;
+  --secondary: #f0f4ec; /* Light sage green */
+  --secondary-foreground: #1a2e1a;
+  --muted: #e8ede4; /* Muted green */
+  --muted-foreground: #6b7c6b; /* Forest gray */
+  --accent: #d4af37; /* Bogotá gold/yellow */
+  --accent-foreground: #1a2e1a;
+  --destructive: #c44536; /* Terracotta red */
+  --destructive-foreground: #ffffff;
+  --border: rgba(45, 90, 45, 0.15); /* Soft green border */
+  --input: transparent;
+  --input-background: #f0f4ec;
+  --switch-background: #c1d4b8;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #2d5a2d;
+  --chart-1: #2d5a2d; /* Golf green */
+  --chart-2: #d4af37; /* Bogotá gold */
+  --chart-3: #7ba05b; /* Mountain green */
+  --chart-4: #c44536; /* Clay red */
+  --chart-5: #4a6741; /* Pine green */
+  --radius: 0.75rem; /* Slightly more rounded for premium feel */
+  --sidebar: #f8faf6;
+  --sidebar-foreground: #1a2e1a;
+  --sidebar-primary: #2d5a2d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0f4ec;
+  --sidebar-accent-foreground: #1a2e1a;
+  --sidebar-border: rgba(45, 90, 45, 0.15);
+  --sidebar-ring: #2d5a2d;
+  
+  /* Golf-specific custom properties */
+  --golf-green: #2d5a2d;
+  --bogota-gold: #d4af37;
+  --mountain-blue: #4a90c2;
+  --clubhouse-brown: #8b4513;
+  --fairway-green: #7ba05b;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+  
+  button {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer base {
+  h1 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  h4 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  p {
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.7;
+  }
+
+  label {
+    font-family: var(--font-body);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  button {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+
+  input, textarea, select {
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.5;
+  }
+}
+
+html {
+  font-size: var(--font-size);
+  scroll-behavior: smooth;
+}
+
+/* Premium Golf Texture Pattern */
+@layer base {
+  .golf-texture {
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(45, 90, 45, 0.03) 0%, transparent 50%);
+  }
+  
+  /* Golf Ball Dimple Pattern - Textura de hoyuelos de bola de golf */
+  .golf-ball-texture {
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(45, 90, 45, 0.015) 1px, transparent 1px),
+      radial-gradient(circle at 50% 0%, rgba(45, 90, 45, 0.015) 1px, transparent 1px),
+      radial-gradient(circle at 25% 43%, rgba(45, 90, 45, 0.015) 1px, transparent 1px),
+      radial-gradient(circle at 75% 43%, rgba(45, 90, 45, 0.015) 1px, transparent 1px),
+      radial-gradient(circle at 0% 86%, rgba(45, 90, 45, 0.015) 1px, transparent 1px),
+      radial-gradient(circle at 50% 86%, rgba(45, 90, 45, 0.015) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: 0 0, 14px 0, 7px 12px, 21px 12px, 0 24px, 14px 24px;
+  }
+  
+  .golf-grid-pattern {
+    background-image: 
+      linear-gradient(rgba(45, 90, 45, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45, 90, 45, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  
+  .gradient-accent {
+    background: linear-gradient(135deg, var(--accent) 0%, #f4d03f 100%);
+  }
+  
+  .gradient-green {
+    background: linear-gradient(135deg, #2d5a2d 0%, #4a6741 100%);
+  }
+  
+  /* Powerful Logo Animations */
+  @keyframes logo-pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 20px 60px rgba(45, 90, 45, 0.3);
+    }
+    50% {
+      transform: scale(1.02);
+      box-shadow: 0 25px 70px rgba(45, 90, 45, 0.4);
+    }
+  }
+  
+  @keyframes logo-glow {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  
+  .logo-powerful {
+    animation: logo-pulse 3s ease-in-out infinite;
+  }
+  
+  .logo-glow {
+    animation: logo-glow 2s ease-in-out infinite;
+  }
+  
+  /* Page Transition Effects */
+  @keyframes ripple-out {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(20);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes fade-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .page-transition-enter {
+    animation: fade-slide-up 0.6s ease-out forwards;
+  }
+  
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    
+    .logo-powerful,
+    .logo-glow {
+      animation: none;
+    }
+  }
+}
