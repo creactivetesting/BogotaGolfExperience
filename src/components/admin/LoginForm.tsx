@@ -40,7 +40,7 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-200">
+        <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-800">
           Email
         </label>
         <input
@@ -50,14 +50,14 @@ export default function LoginForm() {
           autoComplete="username"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="w-full rounded-2xl border border-zinc-700 bg-zinc-800/90 px-4 py-3 text-white placeholder:text-zinc-500 outline-none ring-0 transition focus:border-emerald-400"
+          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 outline-none transition focus:border-[#1a2e1a] focus:ring-2 focus:ring-[#1a2e1a]/20"
           placeholder="name@company.com"
           required
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="mb-2 block text-sm font-medium text-zinc-200">
+        <label htmlFor="password" className="mb-2 block text-sm font-medium text-zinc-800">
           Password
         </label>
         <input
@@ -67,18 +67,18 @@ export default function LoginForm() {
           autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="w-full rounded-2xl border border-zinc-700 bg-zinc-800/90 px-4 py-3 text-white placeholder:text-zinc-500 outline-none ring-0 transition focus:border-emerald-400"
+          className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 outline-none transition focus:border-[#1a2e1a] focus:ring-2 focus:ring-[#1a2e1a]/20"
           placeholder="••••••••"
           required
         />
       </div>
 
-      {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+      {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-2xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700"
+        className="w-full rounded-2xl bg-[#1a2e1a] px-4 py-3.5 font-semibold text-white shadow-md transition hover:bg-[#2d5a2d] disabled:opacity-50"
       >
         {isSubmitting ? 'Signing in...' : 'Sign in to dashboard'}
       </button>
