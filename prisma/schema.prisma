@@ -5,17 +5,17 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model Ambassador {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  code      String   @unique
-  commissionRate Float @default(10)
-  status    String   @default("active")
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  code           String   @unique
+  commissionRate Float    @default(10)
+  status         String   @default("active")
+  createdAt      DateTime @default(now())
 }
 
 model GolfPlan {
@@ -27,18 +27,18 @@ model GolfPlan {
 }
 
 model Testimonial {
-  id         String   @id @default(cuid())
-  golferName String
-  reviewText String
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
+  id          String   @id @default(cuid())
+  golferName  String
+  reviewText  String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }
 
 model GolfCourse {
   id          String   @id @default(cuid())
   name        String
   isAvailable Boolean  @default(true)
-  homeFeatured Boolean @default(false)
+  homeFeatured Boolean  @default(false)
   createdAt   DateTime @default(now())
 }
 
