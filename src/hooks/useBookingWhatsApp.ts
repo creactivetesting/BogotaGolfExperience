@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
 import { buildBookingWhatsAppMessage, buildBookingWhatsAppUrl } from '@/lib/whatsapp';
 
 type UseBookingWhatsAppOptions = {
@@ -25,13 +24,22 @@ function resolveReferralCodeFromPath(pathname: string) {
 
 export function useBookingWhatsApp(options: UseBookingWhatsAppOptions = {}) {
   const { ambassadorName: ambassadorNameFromProps, referralCode } = options;
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const referralFromQuery = searchParams.get('ref')?.trim() ?? '';
-  const referralFromPath = resolveReferralCodeFromPath(pathname ?? '');
-  const resolvedReferralCode = (referralCode?.trim() ?? '') || referralFromQuery || referralFromPath;
   const normalizedAmbassadorNameFromProps = ambassadorNameFromProps?.trim() ?? '';
+  const [locationReferralCode, setLocationReferralCode] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const referralFromQuery = params.get('ref')?.trim() ?? '';
+    const referralFromPath = resolveReferralCodeFromPath(window.location.pathname ?? '');
+    const resolvedFromLocation = referralFromQuery || referralFromPath;
+    setLocationReferralCode(resolvedFromLocation);
+  }, []);
+
+  const resolvedReferralCode = (referralCode?.trim() ?? '') || locationReferralCode;
 
   const [fetchedAmbassadorName, setFetchedAmbassadorName] = useState<string>('');
 
