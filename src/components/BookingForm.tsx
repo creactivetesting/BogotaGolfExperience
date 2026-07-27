@@ -3,10 +3,12 @@
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Calendar, Phone } from "lucide-react";
+import { useBookingWhatsApp } from '@/hooks/useBookingWhatsApp';
+import { BGX_WHATSAPP_NUMBER } from '@/lib/whatsapp';
 
 export function BookingForm() {
-  const whatsappNumber = "573176392251";
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hi%20BGX,%20I'm%20interested%20in%20booking%20a%20golf%20experience`;
+  const { whatsappUrl } = useBookingWhatsApp();
+  const whatsappNumber = BGX_WHATSAPP_NUMBER;
 
   return (
     <section id="contact" className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-primary/5 via-background to-accent/5 golf-ball-texture relative overflow-hidden">

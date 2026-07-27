@@ -7,12 +7,19 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import bgxLogo from "@/assets/optimized/bgx-logo.webp";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useBookingWhatsApp } from '@/hooks/useBookingWhatsApp';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const isCoursesPage = pathname === '/courses';
+  const { whatsappUrl } = useBookingWhatsApp();
+
+  const handleBookTour = () => {
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    setMobileMenuOpen(false);
+  };
   
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -170,7 +177,7 @@ export function Header() {
             <Button 
               size="sm" 
               className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" 
-              onClick={scrollToContact}
+              onClick={handleBookTour}
             >
               <Calendar className="w-4 h-4 mr-2" strokeWidth={1.5} />
               Book Tour
@@ -204,7 +211,7 @@ export function Header() {
                 </button>
               ))}
               <div className="pt-4 border-t space-y-3">
-                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={scrollToContact}>
+                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleBookTour}>
                   <Calendar className="w-4 h-4 mr-2" strokeWidth={1.5} />
                   Book Tour
                 </Button>
