@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import bgxLogo from '@/assets/optimized/bgx-logo.webp';
+
+const MAX_BLOG_COVER_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;
 
 function normalizeAffiliateCode(value: string) {
   return value
@@ -241,11 +243,15 @@ export default function AdminPage() {
   const [blogExcerpt, setBlogExcerpt] = useState('');
   const [blogContent, setBlogContent] = useState('');
   const [blogCoverImage, setBlogCoverImage] = useState('');
+  const [blogCoverImageFileName, setBlogCoverImageFileName] = useState('');
+  const [isDraggingBlogCoverImage, setIsDraggingBlogCoverImage] = useState(false);
+  const [isProcessingBlogCoverImage, setIsProcessingBlogCoverImage] = useState(false);
   const [blogPublished, setBlogPublished] = useState(true);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [isSavingBlog, setIsSavingBlog] = useState(false);
   const [isDeletingBlogId, setIsDeletingBlogId] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const blogCoverInputRef = useRef<HTMLInputElement | null>(null);
   const publicSiteOrigin = resolvePublicSiteOrigin();
 
   function normalizeSlug(value: string) {
@@ -312,6 +318,7 @@ export default function AdminPage() {
     setBlogExcerpt('');
     setBlogContent('');
     setBlogCoverImage('');
+    setBlogCoverImageFileName('');
     setBlogPublished(true);
   }
 
@@ -322,7 +329,77 @@ export default function AdminPage() {
     setBlogExcerpt(blog.excerpt);
     setBlogContent(blog.content);
     setBlogCoverImage(blog.coverImage ?? '');
+    setBlogCoverImageFileName('');
     setBlogPublished(blog.isPublished);
+  }
+
+  async function convertFileToDataUrl(file: File) {
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result !== 'string') {
+          reject(new Error('Could not read image file.'));
+          return;
+        }
+        resolve(result);
+      };
+      reader.onerror = () => reject(new Error('Could not process the selected image.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleBlogCoverImageFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setMessage('Please upload a valid image file (JPG, PNG, WEBP, etc.).');
+      return;
+    }
+
+    if (file.size > MAX_BLOG_COVER_IMAGE_SIZE_BYTES) {
+      setMessage('Image is too large. Please use a file up to 2 MB.');
+      return;
+    }
+
+    setIsProcessingBlogCoverImage(true);
+    setMessage('');
+
+    try {
+      const dataUrl = await convertFileToDataUrl(file);
+      setBlogCoverImage(dataUrl);
+      setBlogCoverImageFileName(file.name);
+    } catch (error) {
+      console.error('Error processing blog cover image:', error);
+      setMessage(error instanceof Error ? error.message : 'Could not process the selected image.');
+    } finally {
+      setIsProcessingBlogCoverImage(false);
+    }
+  }
+
+  async function handleBlogCoverImageInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    await handleBlogCoverImageFile(file);
+    event.target.value = '';
+  }
+
+  async function handleBlogCoverImageDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingBlogCoverImage(false);
+
+    const file = event.dataTransfer.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    await handleBlogCoverImageFile(file);
+  }
+
+  function clearBlogCoverImage() {
+    setBlogCoverImage('');
+    setBlogCoverImageFileName('');
   }
 
   async function handleSaveBlog(event: React.FormEvent<HTMLFormElement>) {
@@ -2024,16 +2101,63 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="blogCoverImage" className="mb-2 block text-sm font-medium text-zinc-700">
-                    Cover Image URL (optional)
+                  <label className="mb-2 block text-sm font-medium text-zinc-700">
+                    Cover Image (optional)
                   </label>
                   <input
-                    id="blogCoverImage"
-                    value={blogCoverImage}
-                    onChange={(event) => setBlogCoverImage(event.target.value)}
-                    className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none transition focus:border-zinc-500"
-                    placeholder="https://..."
+                    ref={blogCoverInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => void handleBlogCoverImageInputChange(event)}
                   />
+                  <div
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setIsDraggingBlogCoverImage(true);
+                    }}
+                    onDragLeave={(event) => {
+                      event.preventDefault();
+                      setIsDraggingBlogCoverImage(false);
+                    }}
+                    onDrop={(event) => void handleBlogCoverImageDrop(event)}
+                    className={`rounded-2xl border-2 border-dashed px-4 py-6 text-center transition ${
+                      isDraggingBlogCoverImage ? 'border-emerald-500 bg-emerald-50' : 'border-zinc-300 bg-zinc-50'
+                    }`}
+                  >
+                    <p className="text-sm font-medium text-zinc-700">
+                      Drag and drop an image here, or choose a file
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">Accepted image files up to 2 MB.</p>
+                    <button
+                      type="button"
+                      onClick={() => blogCoverInputRef.current?.click()}
+                      className="mt-4 rounded-full border border-zinc-300 bg-white px-4 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                    >
+                      Select image
+                    </button>
+                    {isProcessingBlogCoverImage ? (
+                      <p className="mt-3 text-xs font-medium text-emerald-700">Processing image...</p>
+                    ) : null}
+                  </div>
+
+                  {blogCoverImage ? (
+                    <div className="mt-3 rounded-2xl border border-zinc-200 bg-white p-3">
+                      <img src={blogCoverImage} alt="Blog cover preview" className="h-40 w-full rounded-xl object-cover" />
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs text-zinc-600">
+                          {blogCoverImageFileName || 'Current cover image loaded'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={clearBlogCoverImage}
+                          className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                        >
+                          Remove image
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div>
