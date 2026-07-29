@@ -97,7 +97,7 @@ export default async function BlogPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">BGX Editorial</p>
             <h1 className="mt-3 text-4xl font-bold text-zinc-900 sm:text-5xl">BGX Blog</h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-              English-language insights about golf in Bogota, travel recommendations, and guides for golfers looking for premium experiences.
+              Insights about golf in Bogota, travel recommendations, and guides for golfers looking for premium experiences.
             </p>
           </div>
 
