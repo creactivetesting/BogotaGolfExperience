@@ -291,8 +291,8 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
                     <div className="flex justify-between items-center mb-2 gap-3">
                       <span className="text-sm font-semibold text-primary">Estimated Value in Pesos (COP)</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-green-700">
-                          $ {getEstCopPrice().toLocaleString('es-CO')}
+                        <span className="text-lg font-bold text-green-700 whitespace-nowrap">
+                          ${getEstCopPrice().toLocaleString('es-CO')}
                         </span>
                         <Button
                           type="button"
