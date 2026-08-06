@@ -4,7 +4,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Check, Users, CreditCard, ChevronRight, Loader2, Info, Minus, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Check, Users, CreditCard, ChevronRight, Loader2, Info, Minus, Plus, Copy } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
@@ -41,10 +41,45 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
   const [step, setStep] = useState(STEPS.CONFIG);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [exchangeRate, setExchangeRate] = React.useState(4550);
+  const [isExchangeRateFallback, setIsExchangeRateFallback] = React.useState(false);
+  const [copiedEstimatedPrice, setCopiedEstimatedPrice] = React.useState(false);
   const { ambassadorName } = useBookingWhatsApp();
   
   React.useEffect(() => {
     setMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    async function loadExchangeRate() {
+      try {
+        const response = await fetch('/api/public/trm', { cache: 'no-store' });
+        const data = await response.json().catch(() => null) as { exchangeRate?: number; fallback?: boolean } | null;
+
+        if (!response.ok || !data?.exchangeRate) {
+          throw new Error('Unable to load exchange rate.');
+        }
+
+        if (isMounted) {
+          setExchangeRate(data.exchangeRate);
+          setIsExchangeRateFallback(Boolean(data.fallback));
+        }
+      } catch (error) {
+        console.error('Unable to load TRM exchange rate:', error);
+        if (isMounted) {
+          setExchangeRate(4550);
+          setIsExchangeRateFallback(true);
+        }
+      }
+    }
+
+    void loadExchangeRate();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleClose = () => {
@@ -80,11 +115,21 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
     return getPricePerPerson() * (guestCount || 0);
   };
 
-  // Tasa de cambio aproximada fija para referencia
-  const EXCHANGE_RATE = 4150; 
-  
   const getEstCopPrice = () => {
-    return getTotalPrice() * EXCHANGE_RATE;
+    return getTotalPrice() * exchangeRate;
+  };
+
+  const handleCopyPriceForWompi = async () => {
+    const valueToCopy = Math.round(getEstCopPrice()).toString();
+
+    try {
+      await navigator.clipboard.writeText(valueToCopy);
+      setCopiedEstimatedPrice(true);
+      window.setTimeout(() => setCopiedEstimatedPrice(false), 1800);
+    } catch (error) {
+      console.error('Unable to copy COP estimated value:', error);
+      setCopiedEstimatedPrice(false);
+    }
   };
 
   const handleNext = () => {
@@ -243,15 +288,35 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
                   </div>
                   
                   <div className="bg-white rounded-md border border-primary/10 p-3 mb-4">
-                    <div className="flex justify-between items-center mb-1">
+                    <div className="flex justify-between items-center mb-2 gap-3">
                       <span className="text-sm font-semibold text-primary">Estimated Value in Pesos (COP)</span>
-                      <span className="text-lg font-bold text-green-700">
-                        $ {getEstCopPrice().toLocaleString('es-CO')}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-green-700">
+                          $ {getEstCopPrice().toLocaleString('es-CO')}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2 text-xs"
+                          onClick={() => void handleCopyPriceForWompi()}
+                        >
+                          <Copy className="w-3.5 h-3.5 mr-1" />
+                          {copiedEstimatedPrice ? 'Copied' : 'Copy'}
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-muted-foreground text-right">
-                      *Approx. rate 1 USD = ${EXCHANGE_RATE.toLocaleString('es-CO')} COP. Enter this value if requested by Wompi.
+                    <p className="text-[11px] text-primary/80 font-medium mb-1 text-right">
+                      Copy this price to pay in Wompi.
                     </p>
+                    <p className="text-[10px] text-muted-foreground text-right">
+                      *Approx. rate 1 USD = ${exchangeRate.toLocaleString('es-CO')} COP (TRM + 400).
+                    </p>
+                    {isExchangeRateFallback ? (
+                      <p className="text-[10px] text-amber-700 text-right mt-1">
+                        Unable to sync live TRM now. Using fallback value.
+                      </p>
+                    ) : null}
                   </div>
                   
                   {/* Ambassador invitation summary */}
@@ -263,8 +328,8 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
                       </div>
                       <p className="text-sm text-green-700 font-medium">
                         {ambassadorName
-                          ? `You have been invited by (${ambassadorName}) and you will receive special treatment.`
-                          : 'You have been invited by your BGX ambassador and you will receive special treatment.'}
+                          ? `You have been invited by ${ambassadorName} and you will receive special treatment, and a Colombian gift.`
+                          : 'You have been invited by your BGX ambassador and you will receive special treatment, and a Colombian gift.'}
                       </p>
                     </div>
                   </div>
