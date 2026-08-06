@@ -8,11 +8,11 @@ import { Calendar as CalendarIcon, Check, Users, CreditCard, ChevronRight, Loade
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Calendar } from "./ui/calendar";
 import { cn } from "./ui/utils";
 import { Separator } from "./ui/separator";
+import { useBookingWhatsApp } from "@/hooks/useBookingWhatsApp";
 
 interface Plan {
   name: string;
@@ -30,7 +30,6 @@ interface BookingModalProps {
 interface BookingFormValues {
   startDate: Date | undefined;
   guestCount: number;
-  referralCode?: string;
 }
 
 const STEPS = {
@@ -41,10 +40,8 @@ const STEPS = {
 export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
   const [step, setStep] = useState(STEPS.CONFIG);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [referralCode, setReferralCode] = useState("");
-  const [referralApplied, setReferralApplied] = useState(false);
-  const [referralError, setReferralError] = React.useState("");
   const [mounted, setMounted] = React.useState(false);
+  const { ambassadorName } = useBookingWhatsApp();
   
   React.useEffect(() => {
     setMounted(true);
@@ -88,31 +85,6 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
   
   const getEstCopPrice = () => {
     return getTotalPrice() * EXCHANGE_RATE;
-  };
-
-  const handleApplyReferral = () => {
-    // Simple validation - you can expand this with real validation logic
-    const validCodes = ["01BANANO", "02GOMVP", "03JFVEGA", "04FELIPEG"];
-    
-    if (referralCode.trim() === "") {
-      setReferralError("Please enter a referral code");
-      setReferralApplied(false);
-      return;
-    }
-    
-    if (validCodes.includes(referralCode.toUpperCase())) {
-      setReferralApplied(true);
-      setReferralError("");
-    } else {
-      setReferralError("Invalid referral code");
-      setReferralApplied(false);
-    }
-  };
-
-  const handleRemoveReferral = () => {
-    setReferralCode("");
-    setReferralApplied(false);
-    setReferralError("");
   };
 
   const handleNext = () => {
@@ -282,62 +254,19 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
                     </p>
                   </div>
                   
-                  {/* Referral Code Section */}
+                  {/* Ambassador invitation summary */}
                   <div className="bg-gradient-to-r from-accent/10 to-primary/5 rounded-lg p-3 border border-accent/20">
-                    <Label className="text-xs font-semibold text-primary mb-2 block">Have a Referral Code?</Label>
-                    {!referralApplied ? (
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            type="text"
-                            value={referralCode}
-                            onChange={(e) => {
-                              setReferralCode(e.target.value);
-                              setReferralError("");
-                            }}
-                            placeholder="Enter code"
-                            className="flex-1 h-9 text-sm bg-white"
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="h-9 px-4"
-                            onClick={handleApplyReferral}
-                          >
-                            Apply
-                          </Button>
-                        </div>
-                        {referralError && (
-                          <p className="text-xs text-destructive font-medium">
-                            {referralError}
-                          </p>
-                        )}
-                        <p className="text-[10px] text-muted-foreground">
-                          Enter a valid code to receive a special treatment and gift.
-                        </p>
+                    <Label className="text-xs font-semibold text-primary mb-2 block">Ambassador Invitation</Label>
+                    <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-md p-2">
+                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check className="w-4 h-4 text-white" />
                       </div>
-                    ) : (
-                      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-md p-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                            <Check className="w-4 h-4 text-white" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-green-700">{referralCode.toUpperCase()}</p>
-                            <p className="text-[10px] text-green-600">Special treatment included!</p>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={handleRemoveReferral}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    )}
+                      <p className="text-sm text-green-700 font-medium">
+                        {ambassadorName
+                          ? `You have been invited by (${ambassadorName}) and you will receive special treatment.`
+                          : 'You have been invited by your BGX ambassador and you will receive special treatment.'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
