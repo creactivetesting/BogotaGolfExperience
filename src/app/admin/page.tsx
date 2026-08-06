@@ -237,9 +237,8 @@ export default function AdminPage() {
   const [isUpdatingHomeFeaturedCourseId, setIsUpdatingHomeFeaturedCourseId] = useState<string | null>(null);
   const [isGeneratingQuotePdf, setIsGeneratingQuotePdf] = useState(false);
   const [isUpdatingQuoteStatusId, setIsUpdatingQuoteStatusId] = useState<string | null>(null);
-  const [statsAmbassadorId, setStatsAmbassadorId] = useState<string | null>(null);
-  const [ambassadorLinkStats, setAmbassadorLinkStats] = useState<Array<{ url: string; clicks: number; lastClickedAt: string }>>([]);
-  const [isLoadingAmbassadorLinkStats, setIsLoadingAmbassadorLinkStats] = useState(false);
+  const [generalAmbassadorStats, setGeneralAmbassadorStats] = useState<Array<{ ambassadorId: string; ambassadorName: string; ambassadorCode: string; totalClicks: number; topUrl: string | null; lastClickedAt: string | null }>>([]);
+  const [isLoadingGeneralAmbassadorStats, setIsLoadingGeneralAmbassadorStats] = useState(false);
   const [blogTitle, setBlogTitle] = useState('');
   const [blogSlug, setBlogSlug] = useState('');
   const [blogExcerpt, setBlogExcerpt] = useState('');
@@ -314,50 +313,40 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (!statsAmbassadorId) {
-      setAmbassadorLinkStats([]);
-      return;
-    }
-
     let isMounted = true;
 
-    async function loadAmbassadorLinkStats() {
-      setIsLoadingAmbassadorLinkStats(true);
+    async function loadGeneralAmbassadorStats() {
+      setIsLoadingGeneralAmbassadorStats(true);
 
       try {
-        const ambassadorId = statsAmbassadorId;
-        if (!ambassadorId) {
-          return;
-        }
-
-        const response = await fetch(`/api/admin/ambassador-stats?ambassadorId=${encodeURIComponent(ambassadorId)}`);
+        const response = await fetch('/api/admin/ambassador-stats', { cache: 'no-store' });
         const data = await response.json().catch(() => ({ stats: [] }));
 
         if (!response.ok) {
-          throw new Error(data.error || 'No se pudo cargar el ranking de URLs.');
+          throw new Error(data.error || 'No se pudo cargar el ranking general de clics.');
         }
 
         if (isMounted) {
-          setAmbassadorLinkStats(Array.isArray(data.stats) ? data.stats : []);
+          setGeneralAmbassadorStats(Array.isArray(data.stats) ? data.stats : []);
         }
       } catch (error) {
-        console.error('Error cargando stats de URLs:', error);
+        console.error('Error cargando stats generales de URLs:', error);
         if (isMounted) {
-          setAmbassadorLinkStats([]);
+          setGeneralAmbassadorStats([]);
         }
       } finally {
         if (isMounted) {
-          setIsLoadingAmbassadorLinkStats(false);
+          setIsLoadingGeneralAmbassadorStats(false);
         }
       }
     }
 
-    void loadAmbassadorLinkStats();
+    void loadGeneralAmbassadorStats();
 
     return () => {
       isMounted = false;
     };
-  }, [statsAmbassadorId]);
+  }, [ambassadors.length]);
 
   function resetBlogForm() {
     setEditingBlogId(null);
@@ -1217,7 +1206,6 @@ export default function AdminPage() {
 
   const quotePlan = plans.find((plan) => plan.id === selectedPlanId);
   const selectedAmbassador = ambassadors.find((ambassador) => ambassador.id === selectedAmbassadorId);
-  const selectedStatsAmbassador = ambassadors.find((ambassador) => ambassador.id === statsAmbassadorId) ?? null;
   const parsedPlayers = Number(playerCount) || 0;
   const subtotal = (quotePlan?.basePrice ?? 0) * parsedPlayers;
   const selectedAmbassadorCommissionRate = selectedAmbassador?.commissionRate ?? 0;
@@ -1235,39 +1223,6 @@ export default function AdminPage() {
   const coursesPageOnlyCourses = courses.filter((course) => !course.homeFeatured);
   const selectedQuoteCourses = courses.filter((course) => selectedQuoteCourseIds.includes(course.id));
   const quotePackageTemplate = getQuotePackageTemplate(quotePlan?.name);
-  const selectedStatsQuotes = selectedStatsAmbassador
-    ? generatedQuotes
-        .filter((quote) => {
-          const ambassadorCode = normalizeMatchValue(selectedStatsAmbassador.code);
-          const ambassadorName = normalizeMatchValue(selectedStatsAmbassador.name);
-          const quoteCode = normalizeMatchValue(quote.ambassadorCode);
-          const quoteName = normalizeMatchValue(quote.ambassadorName);
-
-          if (ambassadorCode && quoteCode) {
-            return ambassadorCode === quoteCode;
-          }
-
-          if (ambassadorCode && !quoteCode && quoteName) {
-            return ambassadorName === quoteName;
-          }
-
-          if (!ambassadorCode && ambassadorName) {
-            return ambassadorName === quoteName;
-          }
-
-          return false;
-        })
-        .sort((first, second) => new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime())
-    : [];
-  const statsTotalDeals = selectedStatsQuotes.length;
-  const statsBoughtQuotes = selectedStatsQuotes.filter((quote) => quote.status === 'BOUGHT');
-  const statsClosedQuotes = selectedStatsQuotes.filter((quote) => quote.status !== 'PENDING');
-  const statsOpenQuotes = selectedStatsQuotes.filter((quote) => quote.status === 'PENDING');
-  const statsCommissionGenerated = statsBoughtQuotes.reduce((sum, quote) => sum + quote.commission, 0);
-  const statsClosedPercentage = statsTotalDeals > 0 ? (statsClosedQuotes.length / statsTotalDeals) * 100 : 0;
-  const statsOpenPercentage = statsTotalDeals > 0 ? (statsOpenQuotes.length / statsTotalDeals) * 100 : 0;
-  const statsLastSaleDate = statsBoughtQuotes[0]?.createdAt;
-  const statsFirstSaleDate = statsBoughtQuotes.length > 0 ? statsBoughtQuotes[statsBoughtQuotes.length - 1].createdAt : null;
 
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-16 text-zinc-900 sm:px-6 lg:px-8">
@@ -1426,13 +1381,6 @@ export default function AdminPage() {
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => setStatsAmbassadorId(ambassador.id)}
-                                className="rounded-full border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-50"
-                              >
-                                Stats
-                              </button>
-                              <button
-                                type="button"
                                 onClick={() => void handleDeleteAmbassador(ambassador.id)}
                                 disabled={isDeletingAmbassadorId === ambassador.id}
                                 className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
@@ -1448,185 +1396,70 @@ export default function AdminPage() {
                 </table>
               </div>
 
-              {selectedStatsAmbassador ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/45 px-4 py-8">
-                  <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl">
-                    <div className="mb-5 flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Ambassador Stats</p>
-                        <h3 className="mt-2 text-2xl font-semibold text-zinc-900">{selectedStatsAmbassador.name}</h3>
-                        <p className="mt-1 text-sm text-zinc-600">
-                          Código: {selectedStatsAmbassador.code} | Comisión: {selectedStatsAmbassador.commissionRate}%
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setStatsAmbassadorId(null)}
-                        className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
-                      >
-                        Cerrar
-                      </button>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Negocios traídos</p>
-                        <p className="mt-2 text-2xl font-bold text-zinc-900">{statsTotalDeals}</p>
-                      </div>
-                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Negocios cerrados</p>
-                        <p className="mt-2 text-2xl font-bold text-zinc-900">{statsClosedQuotes.length}</p>
-                        <p className="mt-1 text-xs text-zinc-600">{statsClosedPercentage.toFixed(1)}% del total</p>
-                      </div>
-                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Negocios abiertos</p>
-                        <p className="mt-2 text-2xl font-bold text-zinc-900">{statsOpenQuotes.length}</p>
-                        <p className="mt-1 text-xs text-zinc-600">{statsOpenPercentage.toFixed(1)}% del total</p>
-                      </div>
-                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Comisiones generadas</p>
-                        <p className="mt-2 text-2xl font-bold text-zinc-900">{formatCurrencyUSD(statsCommissionGenerated)}</p>
-                        <p className="mt-1 text-xs text-zinc-600">Solo quotes compradas</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Cuántos ha vendido</p>
-                        <p className="mt-2 text-xl font-bold text-zinc-900">{statsBoughtQuotes.length}</p>
-                      </div>
-                      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Actividad de ventas</p>
-                        <p className="mt-2 text-sm text-zinc-700">
-                          Primera venta:{' '}
-                          {statsFirstSaleDate
-                            ? new Date(statsFirstSaleDate).toLocaleString('es-CO', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : 'Sin ventas'}
-                        </p>
-                        <p className="mt-1 text-sm text-zinc-700">
-                          Última venta:{' '}
-                          {statsLastSaleDate
-                            ? new Date(statsLastSaleDate).toLocaleString('es-CO', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : 'Sin ventas'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-6">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h4 className="text-base font-semibold text-zinc-900">Ranking de URLs con más clics</h4>
-                        <p className="text-xs text-zinc-500">Se registra cada vez que se abre un enlace afiliado.</p>
-                      </div>
-
-                      {isLoadingAmbassadorLinkStats ? (
-                        <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-5 text-sm text-zinc-600">
-                          Cargando ranking de URLs...
-                        </div>
-                      ) : ambassadorLinkStats.length === 0 ? (
-                        <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-5 text-sm text-zinc-600">
-                          Aún no hay clics registrados para este embajador.
-                        </div>
-                      ) : (
-                        <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-200">
-                          <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
-                            <thead className="bg-zinc-100 text-zinc-800">
-                              <tr>
-                                <th className="px-4 py-3 font-medium">#</th>
-                                <th className="px-4 py-3 font-medium">URL</th>
-                                <th className="px-4 py-3 font-medium">Clics</th>
-                                <th className="px-4 py-3 font-medium">Último clic</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-200 bg-white">
-                              {ambassadorLinkStats.map((stat, index) => (
-                                <tr key={`${stat.url}-${index}`} className="text-zinc-700">
-                                  <td className="px-4 py-3 font-semibold">{index + 1}</td>
-                                  <td className="px-4 py-3">
-                                    <a
-                                      href={stat.url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="max-w-[320px] truncate font-medium text-emerald-700 underline decoration-dotted underline-offset-4"
-                                    >
-                                      {stat.url}
-                                    </a>
-                                  </td>
-                                  <td className="px-4 py-3 font-semibold">{stat.clicks}</td>
-                                  <td className="px-4 py-3">
-                                    {new Date(stat.lastClickedAt).toLocaleString('es-CO', {
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: '2-digit',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-6">
-                      <h4 className="text-base font-semibold text-zinc-900">Quotes asociadas al embajador</h4>
-                      {selectedStatsQuotes.length === 0 ? (
-                        <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-5 text-sm text-zinc-600">
-                          Este embajador aún no tiene quotes asociadas.
-                        </div>
-                      ) : (
-                        <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-200">
-                          <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
-                            <thead className="bg-zinc-100 text-zinc-800">
-                              <tr>
-                                <th className="px-4 py-3 font-medium">Fecha</th>
-                                <th className="px-4 py-3 font-medium">Cliente</th>
-                                <th className="px-4 py-3 font-medium">Plan</th>
-                                <th className="px-4 py-3 font-medium">Total</th>
-                                <th className="px-4 py-3 font-medium">Comisión</th>
-                                <th className="px-4 py-3 font-medium">Estatus</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-200 bg-white">
-                              {selectedStatsQuotes.map((quote) => (
-                                <tr key={quote.id} className="text-zinc-700">
-                                  <td className="px-4 py-3">
-                                    {new Date(quote.createdAt).toLocaleString('es-CO', {
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: '2-digit',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </td>
-                                  <td className="px-4 py-3 font-medium">{quote.customerName}</td>
-                                  <td className="px-4 py-3">{quote.planName}</td>
-                                  <td className="px-4 py-3 font-semibold">{formatCurrencyUSD(quote.subtotal)}</td>
-                                  <td className="px-4 py-3">{formatCurrencyUSD(quote.commission)}</td>
-                                  <td className="px-4 py-3">{quoteStatusLabel(quote.status)}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
+              <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-zinc-900">Estadísticas generales de clics</h3>
+                    <p className="mt-1 text-sm text-zinc-600">Ranking general por embajador según los enlaces afiliados compartidos.</p>
                   </div>
                 </div>
-              ) : null}
+
+                {isLoadingGeneralAmbassadorStats ? (
+                  <div className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-5 text-sm text-zinc-600">
+                    Cargando ranking general de clics...
+                  </div>
+                ) : generalAmbassadorStats.length === 0 ? (
+                  <div className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-5 text-sm text-zinc-600">
+                    Aún no hay clics registrados para ningún embajador.
+                  </div>
+                ) : (
+                  <div className="mt-4 overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
+                    <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
+                      <thead className="bg-zinc-100 text-zinc-800">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">#</th>
+                          <th className="px-4 py-3 font-medium">Embajador</th>
+                          <th className="px-4 py-3 font-medium">Clics</th>
+                          <th className="px-4 py-3 font-medium">URL principal</th>
+                          <th className="px-4 py-3 font-medium">Último clic</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-200 bg-white">
+                        {generalAmbassadorStats.map((stat, index) => (
+                          <tr key={stat.ambassadorId} className="text-zinc-700">
+                            <td className="px-4 py-3 font-semibold">{index + 1}</td>
+                            <td className="px-4 py-3">
+                              <div className="font-medium text-zinc-900">{stat.ambassadorName}</div>
+                              <div className="text-xs text-zinc-500">{stat.ambassadorCode}</div>
+                            </td>
+                            <td className="px-4 py-3 font-semibold">{stat.totalClicks}</td>
+                            <td className="px-4 py-3">
+                              {stat.topUrl ? (
+                                <a href={stat.topUrl} target="_blank" rel="noreferrer" className="max-w-[320px] truncate font-medium text-emerald-700 underline decoration-dotted underline-offset-4">
+                                  {stat.topUrl}
+                                </a>
+                              ) : (
+                                <span className="text-zinc-500">Sin datos</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              {stat.lastClickedAt
+                                ? new Date(stat.lastClickedAt).toLocaleString('es-CO', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })
+                                : 'Sin clics'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </section>
 
             <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 backdrop-blur-xl">
