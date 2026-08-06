@@ -19,6 +19,17 @@ model Ambassador {
   createdAt      DateTime @default(now())
 }
 
+model AmbassadorLinkClick {
+  id             String   @id @default(cuid())
+  ambassadorCode String
+  targetUrl      String
+  sourcePath     String?
+  clickedAt      DateTime @default(now())
+
+  @@index([ambassadorCode])
+  @@index([clickedAt])
+}
+
 model GolfPlan {
   id          String   @id @default(cuid())
   name        String

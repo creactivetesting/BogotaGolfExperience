@@ -238,6 +238,8 @@ export default function AdminPage() {
   const [isGeneratingQuotePdf, setIsGeneratingQuotePdf] = useState(false);
   const [isUpdatingQuoteStatusId, setIsUpdatingQuoteStatusId] = useState<string | null>(null);
   const [statsAmbassadorId, setStatsAmbassadorId] = useState<string | null>(null);
+  const [ambassadorLinkStats, setAmbassadorLinkStats] = useState<Array<{ url: string; clicks: number; lastClickedAt: string }>>([]);
+  const [isLoadingAmbassadorLinkStats, setIsLoadingAmbassadorLinkStats] = useState(false);
   const [blogTitle, setBlogTitle] = useState('');
   const [blogSlug, setBlogSlug] = useState('');
   const [blogExcerpt, setBlogExcerpt] = useState('');
@@ -310,6 +312,52 @@ export default function AdminPage() {
     void loadGeneratedQuotes();
     void loadBlogs();
   }, []);
+
+  useEffect(() => {
+    if (!statsAmbassadorId) {
+      setAmbassadorLinkStats([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadAmbassadorLinkStats() {
+      setIsLoadingAmbassadorLinkStats(true);
+
+      try {
+        const ambassadorId = statsAmbassadorId;
+        if (!ambassadorId) {
+          return;
+        }
+
+        const response = await fetch(`/api/admin/ambassador-stats?ambassadorId=${encodeURIComponent(ambassadorId)}`);
+        const data = await response.json().catch(() => ({ stats: [] }));
+
+        if (!response.ok) {
+          throw new Error(data.error || 'No se pudo cargar el ranking de URLs.');
+        }
+
+        if (isMounted) {
+          setAmbassadorLinkStats(Array.isArray(data.stats) ? data.stats : []);
+        }
+      } catch (error) {
+        console.error('Error cargando stats de URLs:', error);
+        if (isMounted) {
+          setAmbassadorLinkStats([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingAmbassadorLinkStats(false);
+        }
+      }
+    }
+
+    void loadAmbassadorLinkStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [statsAmbassadorId]);
 
   function resetBlogForm() {
     setEditingBlogId(null);
@@ -1474,6 +1522,63 @@ export default function AdminPage() {
                             : 'Sin ventas'}
                         </p>
                       </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-base font-semibold text-zinc-900">Ranking de URLs con más clics</h4>
+                        <p className="text-xs text-zinc-500">Se registra cada vez que se abre un enlace afiliado.</p>
+                      </div>
+
+                      {isLoadingAmbassadorLinkStats ? (
+                        <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-5 text-sm text-zinc-600">
+                          Cargando ranking de URLs...
+                        </div>
+                      ) : ambassadorLinkStats.length === 0 ? (
+                        <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-5 text-sm text-zinc-600">
+                          Aún no hay clics registrados para este embajador.
+                        </div>
+                      ) : (
+                        <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-200">
+                          <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
+                            <thead className="bg-zinc-100 text-zinc-800">
+                              <tr>
+                                <th className="px-4 py-3 font-medium">#</th>
+                                <th className="px-4 py-3 font-medium">URL</th>
+                                <th className="px-4 py-3 font-medium">Clics</th>
+                                <th className="px-4 py-3 font-medium">Último clic</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-200 bg-white">
+                              {ambassadorLinkStats.map((stat, index) => (
+                                <tr key={`${stat.url}-${index}`} className="text-zinc-700">
+                                  <td className="px-4 py-3 font-semibold">{index + 1}</td>
+                                  <td className="px-4 py-3">
+                                    <a
+                                      href={stat.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="max-w-[320px] truncate font-medium text-emerald-700 underline decoration-dotted underline-offset-4"
+                                    >
+                                      {stat.url}
+                                    </a>
+                                  </td>
+                                  <td className="px-4 py-3 font-semibold">{stat.clicks}</td>
+                                  <td className="px-4 py-3">
+                                    {new Date(stat.lastClickedAt).toLocaleString('es-CO', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-6">

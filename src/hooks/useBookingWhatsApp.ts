@@ -41,6 +41,40 @@ export function useBookingWhatsApp(options: UseBookingWhatsAppOptions = {}) {
 
   const resolvedReferralCode = (referralCode?.trim() ?? '') || locationReferralCode;
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !resolvedReferralCode) {
+      return;
+    }
+
+    try {
+      const storageKey = 'bgx-tracked-referral-codes';
+      const existingValue = window.sessionStorage.getItem(storageKey) ?? '';
+      const trackedCodes = existingValue.split(',').filter(Boolean);
+
+      if (trackedCodes.includes(resolvedReferralCode)) {
+        return;
+      }
+
+      const targetUrl = `${window.location.origin}${window.location.pathname}${window.location.search || ''}`;
+
+      void fetch('/api/public/track-referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: resolvedReferralCode,
+          targetUrl,
+          sourcePath: window.location.pathname || '/',
+        }),
+        cache: 'no-store',
+      });
+
+      trackedCodes.push(resolvedReferralCode);
+      window.sessionStorage.setItem(storageKey, trackedCodes.join(','));
+    } catch (error) {
+      console.error('Unable to track referral click:', error);
+    }
+  }, [resolvedReferralCode]);
+
   const [fetchedAmbassadorName, setFetchedAmbassadorName] = useState<string>('');
 
   useEffect(() => {
