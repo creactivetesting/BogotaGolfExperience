@@ -310,7 +310,7 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
                       Copy this price to pay in Wompi.
                     </p>
                     <p className="text-[10px] text-muted-foreground text-right">
-                      *Approx. rate 1 USD = ${exchangeRate.toLocaleString('es-CO')} COP (TRM + 400).
+                      *Approx. rate 1 USD = ${exchangeRate.toLocaleString('es-CO')} COP.
                     </p>
                     {isExchangeRateFallback ? (
                       <p className="text-[10px] text-amber-700 text-right mt-1">
