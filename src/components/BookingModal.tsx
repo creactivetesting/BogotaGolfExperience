@@ -41,7 +41,7 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
   const [step, setStep] = useState(STEPS.CONFIG);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = React.useState(false);
-  const [exchangeRate, setExchangeRate] = React.useState(4550);
+  const [exchangeRate, setExchangeRate] = React.useState(4250);
   const [isExchangeRateFallback, setIsExchangeRateFallback] = React.useState(false);
   const [copiedEstimatedPrice, setCopiedEstimatedPrice] = React.useState(false);
   const { ambassadorName } = useBookingWhatsApp();
@@ -69,7 +69,7 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
       } catch (error) {
         console.error('Unable to load TRM exchange rate:', error);
         if (isMounted) {
-          setExchangeRate(4550);
+          setExchangeRate(4250);
           setIsExchangeRateFallback(true);
         }
       }

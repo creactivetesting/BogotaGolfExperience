@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 const FALLBACK_TRM = 4150;
-const BGX_MARGIN_COP = 400;
+const BGX_MARGIN_COP = 100;
 
 function parseTrmValue(raw: unknown): number | null {
   if (typeof raw === 'number' && Number.isFinite(raw)) {
