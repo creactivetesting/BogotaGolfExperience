@@ -894,6 +894,7 @@ export default function AdminPage() {
       const borderColor = '#d9e1d9';
       const mutedText = '#5d6b63';
       const headingText = '#223029';
+      const directPaymentUrl = 'https://checkout.wompi.co/method';
       let y = marginY;
 
       const customerLabel = normalizePdfText(customerName.trim()) || 'Unnamed Client';
@@ -1174,6 +1175,28 @@ export default function AdminPage() {
       doc.text('Total Quote Amount', marginX + 20, y + 66);
       doc.text(formatCurrencyUSD(subtotal), pageWidth - marginX - 20, y + 66, { align: 'right' });
       y += summaryHeight + 16;
+
+      // Direct payment link
+      drawSectionHeading('Direct Payment');
+      const paymentBoxHeight = 56;
+      ensureSpace(paymentBoxHeight + 10);
+      drawRoundedBox(marginX, y, contentWidth, paymentBoxHeight, '#ffffff', borderColor, 10);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(headingText);
+      doc.text('To pay directly from this quote,', marginX + 16, y + 24);
+      const linkX = marginX + 170;
+      const linkY = y + 24;
+      doc.setTextColor(green);
+      doc.setFont('helvetica', 'bold');
+      doc.text('click here.', linkX, linkY);
+      const linkWidth = doc.getTextWidth('click here.');
+      doc.link(linkX, linkY - 9, linkWidth, 12, { url: directPaymentUrl });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(mutedText);
+      doc.text(directPaymentUrl, marginX + 16, y + 42);
+      y += paymentBoxHeight + 12;
 
       // Terms
       drawSectionHeading('Important Terms & Conditions');
