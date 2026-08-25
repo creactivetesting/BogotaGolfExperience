@@ -68,11 +68,11 @@ export function Header() {
 
   const leftNavigation = [
     { name: "Home", onClick: () => scrollToSection('home') },
-    { name: "Golf Courses", onClick: () => scrollToSection('courses') }
+    { name: "Golf Courses", onClick: () => scrollToSection('courses') },
+    { name: "Golf Plans", onClick: () => scrollToSection('plans') }
   ];
 
   const rightNavigation = [
-    { name: "Golf Plans", onClick: () => scrollToSection('plans') },
     { name: "Experiences", onClick: () => scrollToSection('experiences') },
     { name: "Blogs", onClick: () => router.push('/blog') },
     { name: "Contact", onClick: scrollToContact }
@@ -117,8 +117,8 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Left Side - Navigation próxima al logo */}
-          <div className="hidden lg:flex items-center absolute left-0 space-x-1">
+          {/* Left Side - Navigation con balance visual a la izquierda del logo */}
+          <div className="hidden lg:flex items-center absolute left-0 space-x-2">
             <Button 
               variant="outline" 
               size="sm" 
@@ -129,9 +129,9 @@ export function Header() {
               <span className="hidden xl:inline">Call Us</span>
             </Button>
 
-            <div className="w-px h-6 bg-border mx-4"></div>
+            <div className="w-px h-6 bg-border mx-2"></div>
 
-            <nav className="flex items-center space-x-6">
+            <nav className="flex items-center gap-5 xl:gap-6">
               {leftNavigation.map((item) => (
                 <button
                   key={item.name}
@@ -145,9 +145,9 @@ export function Header() {
             </nav>
           </div>
 
-          {/* Right Side - Navigation próxima al logo */}
-          <div className="hidden lg:flex items-center absolute right-0 space-x-1">
-            <nav className="flex items-center space-x-6">
+          {/* Right Side - Navegación balanceada a la derecha del logo */}
+          <div className="hidden lg:flex items-center absolute right-0 space-x-2">
+            <nav className="flex items-center gap-5 xl:gap-6">
               {rightNavigation.map((item) => (
                 <button
                   key={item.name}
@@ -160,7 +160,7 @@ export function Header() {
               ))}
             </nav>
 
-            <div className="w-px h-6 bg-border mx-4"></div>
+            <div className="w-px h-6 bg-border mx-2"></div>
 
             <Button 
               size="sm" 
