@@ -118,7 +118,7 @@ export function Header() {
           </div>
 
           {/* Left Side - Navigation con balance visual a la izquierda del logo */}
-          <div className="hidden lg:flex items-center absolute left-0 space-x-2">
+          <div className="hidden lg:flex items-center absolute left-0 space-x-3">
             <Button 
               variant="outline" 
               size="sm" 
@@ -129,9 +129,9 @@ export function Header() {
               <span className="hidden xl:inline">Call Us</span>
             </Button>
 
-            <div className="w-px h-6 bg-border mx-2"></div>
+            <div className="w-px h-6 bg-border mx-3"></div>
 
-            <nav className="flex items-center gap-5 xl:gap-6">
+            <nav className="flex items-center gap-4 xl:gap-5 2xl:gap-6">
               {leftNavigation.map((item) => (
                 <button
                   key={item.name}
@@ -146,8 +146,8 @@ export function Header() {
           </div>
 
           {/* Right Side - Navegación balanceada a la derecha del logo */}
-          <div className="hidden lg:flex items-center absolute right-0 space-x-2">
-            <nav className="flex items-center gap-5 xl:gap-6">
+          <div className="hidden lg:flex items-center absolute right-0 space-x-3">
+            <nav className="flex items-center gap-4 xl:gap-5 2xl:gap-6">
               {rightNavigation.map((item) => (
                 <button
                   key={item.name}
@@ -160,7 +160,7 @@ export function Header() {
               ))}
             </nav>
 
-            <div className="w-px h-6 bg-border mx-2"></div>
+            <div className="w-px h-6 bg-border mx-3"></div>
 
             <Button 
               size="sm" 
