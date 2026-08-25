@@ -66,15 +66,13 @@ export function Header() {
     setMobileMenuOpen(false);
   };
 
-  const leftNavigation = [
+  const primaryNavigation = [
+    { name: "Home", onClick: () => scrollToSection('home') },
     { name: "Golf Courses", onClick: () => scrollToSection('courses') },
-    { name: "Home", onClick: () => scrollToSection('home') }
-  ];
-
-  const rightNavigation = [
     { name: "Golf Plans", onClick: () => scrollToSection('plans') },
     { name: "Experiences", onClick: () => scrollToSection('experiences') },
-    { name: "Blogs", onClick: () => router.push('/blog') }
+    { name: "Blogs", onClick: () => router.push('/blog') },
+    { name: "Contact", onClick: scrollToContact }
   ];
 
   return (
@@ -116,72 +114,39 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Left Side - Navigation próxima al logo */}
-          <div className="hidden lg:flex items-center absolute left-0 space-x-1">
-            {/* CTA Button - Extremo izquierdo */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={scrollToContact} 
-              className="border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
-            >
-              <Phone className="w-4 h-4 xl:mr-2" strokeWidth={1.5} />
-              <span className="hidden xl:inline">Call Us</span>
-            </Button>
-
-            {/* Separador visual */}
-            <div className="w-px h-6 bg-border mx-4"></div>
-
-            {/* Navegación izquierda - más cerca del logo */}
-            <nav className="flex items-center space-x-6">
-              {leftNavigation.map((item) => (
+          {/* Navegación principal ordenada exactamente como se pidió */}
+          <div className="hidden lg:flex items-center justify-center absolute inset-x-0 px-8">
+            <nav className="flex items-center gap-3 xl:gap-5 2xl:gap-6">
+              {primaryNavigation.map((item) => (
                 <button
                   key={item.name}
                   onClick={item.onClick}
-                  className="text-foreground hover:text-primary transition-all duration-300 font-medium relative group"
+                  className="text-foreground hover:text-primary transition-all duration-300 font-medium relative group whitespace-nowrap"
                 >
                   {item.name}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300"></span>
                 </button>
               ))}
-            </nav>
-          </div>
 
-          {/* Right Side - Navigation próxima al logo */}
-          <div className="hidden lg:flex items-center absolute right-0 space-x-1">
-            {/* Navegación derecha - más cerca del logo */}
-            <nav className="flex items-center space-x-6">
-              {rightNavigation.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={item.onClick}
-                  className="text-foreground hover:text-primary transition-all duration-300 font-medium relative group"
-                >
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300"></span>
-                </button>
-              ))}
-              <button
-                onClick={scrollToContact}
-                className="text-foreground hover:text-primary transition-all duration-300 font-medium relative group"
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={scrollToContact} 
+                className="border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 whitespace-nowrap"
               >
-                Contact
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300"></span>
-              </button>
+                <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                Call Us
+              </Button>
+
+              <Button 
+                size="sm" 
+                className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 whitespace-nowrap" 
+                onClick={handleBookTour}
+              >
+                <Calendar className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                Book Tour
+              </Button>
             </nav>
-
-            {/* Separador visual */}
-            <div className="w-px h-6 bg-border mx-4"></div>
-
-            {/* CTA Button - Extremo derecho */}
-            <Button 
-              size="sm" 
-              className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" 
-              onClick={handleBookTour}
-            >
-              <Calendar className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Book Tour
-            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -201,7 +166,7 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t bg-white">
             <div className="px-4 py-6 space-y-4">
-              {[...leftNavigation, ...rightNavigation, { name: "Contact", onClick: scrollToContact }].map((item) => (
+              {[...primaryNavigation, { name: "Call Us", onClick: scrollToContact }, { name: "Book Tour", onClick: handleBookTour }].map((item) => (
                 <button
                   key={item.name}
                   onClick={item.onClick}
@@ -210,16 +175,6 @@ export function Header() {
                   {item.name}
                 </button>
               ))}
-              <div className="pt-4 border-t space-y-3">
-                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleBookTour}>
-                  <Calendar className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                  Book Tour
-                </Button>
-                <Button variant="outline" className="w-full border-primary/20" onClick={scrollToContact}>
-                  <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                  Contact Us
-                </Button>
-              </div>
             </div>
           </div>
         )}
