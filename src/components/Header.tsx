@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { Menu, Calendar, MessageCircleMore, X } from "lucide-react";
+import { Menu, Calendar, Phone, X } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import bgxLogo from "@/assets/optimized/bgx-logo.webp";
 import Link from "next/link";
@@ -125,7 +125,7 @@ export function Header() {
               onClick={scrollToContact} 
               className="border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
             >
-              <MessageCircleMore className="w-4 h-4 xl:mr-2" strokeWidth={1.7} />
+              <Phone className="w-4 h-4 xl:mr-2" strokeWidth={1.5} />
               <span className="hidden xl:inline">Call Us</span>
             </Button>
 
