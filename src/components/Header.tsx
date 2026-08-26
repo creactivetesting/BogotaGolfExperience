@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { Menu, Calendar, Phone, X } from "lucide-react";
+import { Menu, Calendar, MessageCircleMore, X } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import bgxLogo from "@/assets/optimized/bgx-logo.webp";
 import Link from "next/link";
@@ -125,13 +125,13 @@ export function Header() {
               onClick={scrollToContact} 
               className="border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
             >
-              <Phone className="w-4 h-4 xl:mr-2" strokeWidth={1.5} />
+              <MessageCircleMore className="w-4 h-4 xl:mr-2" strokeWidth={1.7} />
               <span className="hidden xl:inline">Call Us</span>
             </Button>
 
             <div className="w-px h-6 bg-border mx-3"></div>
 
-            <nav className="flex items-center gap-4 xl:gap-5 2xl:gap-6">
+            <nav className="flex items-center gap-5 xl:gap-6 2xl:gap-7">
               {leftNavigation.map((item) => (
                 <button
                   key={item.name}
@@ -147,7 +147,7 @@ export function Header() {
 
           {/* Right Side - Navegación balanceada a la derecha del logo */}
           <div className="hidden lg:flex items-center absolute right-0 space-x-3">
-            <nav className="flex items-center gap-4 xl:gap-5 2xl:gap-6">
+            <nav className="flex items-center gap-5 xl:gap-6 2xl:gap-7">
               {rightNavigation.map((item) => (
                 <button
                   key={item.name}
