@@ -131,12 +131,12 @@ export function Header() {
 
             <div className="w-px h-6 bg-border mx-3"></div>
 
-            <nav className="flex items-center gap-5 xl:gap-6 2xl:gap-7">
+            <nav className="flex items-center gap-6 xl:gap-7 2xl:gap-8">
               {leftNavigation.map((item) => (
                 <button
                   key={item.name}
                   onClick={item.onClick}
-                  className="text-foreground hover:text-primary transition-all duration-300 font-medium relative group"
+                  className="text-foreground hover:text-primary transition-all duration-300 font-medium relative group tracking-[0.01em]"
                 >
                   {item.name}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300"></span>
@@ -147,12 +147,12 @@ export function Header() {
 
           {/* Right Side - Navegación balanceada a la derecha del logo */}
           <div className="hidden lg:flex items-center absolute right-0 space-x-3">
-            <nav className="flex items-center gap-5 xl:gap-6 2xl:gap-7">
+            <nav className="flex items-center gap-6 xl:gap-7 2xl:gap-8">
               {rightNavigation.map((item) => (
                 <button
                   key={item.name}
                   onClick={item.onClick}
-                  className="text-foreground hover:text-primary transition-all duration-300 font-medium relative group"
+                  className="text-foreground hover:text-primary transition-all duration-300 font-medium relative group tracking-[0.01em]"
                 >
                   {item.name}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300"></span>
