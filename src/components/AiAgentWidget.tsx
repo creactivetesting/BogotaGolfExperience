@@ -22,7 +22,13 @@ export function AiAgentWidget() {
       type="button"
       onClick={() => window.open(whatsappUrl, '_blank', 'noopener,noreferrer')}
       aria-label="Chat on WhatsApp"
-      className="fixed bottom-5 right-5 z-[60] flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-[#25D366] text-white shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition-all duration-200 hover:scale-105 hover:shadow-[0_20px_45px_rgba(37,211,102,0.38)] focus:outline-none focus:ring-4 focus:ring-[#25D366]/30"
+      style={{
+        position: 'fixed',
+        right: '1rem',
+        bottom: '1rem',
+        zIndex: 2147483647,
+      }}
+      className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-[#25D366] text-white shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition-all duration-200 hover:scale-105 hover:shadow-[0_20px_45px_rgba(37,211,102,0.38)] focus:outline-none focus:ring-4 focus:ring-[#25D366]/30"
     >
       <WhatsAppIcon />
     </button>
