@@ -13,7 +13,6 @@ import { Testimonials } from "@/components/Testimonials";
 import { FAQ } from "@/components/FAQ";
 import { BookingForm } from "@/components/BookingForm";
 import { Footer } from "@/components/Footer";
-import { AiAgentWidget } from "@/components/AiAgentWidget";
 
 export default function HomeClient() {
   return (
@@ -31,7 +30,6 @@ export default function HomeClient() {
       <FAQ />
       <BookingForm />
       <Footer />
-      <AiAgentWidget />
     </>
   );
 }

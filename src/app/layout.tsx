@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import JSONLD from "@/components/JSONLD";
+import { AiAgentWidget } from "@/components/AiAgentWidget";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ export default function RootLayout({
         <main className="min-h-screen">
           {children}
         </main>
+        <AiAgentWidget />
         <Toaster />
       </body>
     </html>
