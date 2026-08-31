@@ -109,9 +109,9 @@ export function Footer() {
             <p>&copy; 2026 BGX Bogotá Golf Experiences. All rights reserved. Built by Armonia Automation.</p>
           </div>
           <div className="flex space-x-6 text-sm opacity-80">
-            <a href="#" className="hover:opacity-100 transition-opacity">Privacy Policy</a>
-            <a href="#" className="hover:opacity-100 transition-opacity">Terms of Service</a>
-            <a href="#" className="hover:opacity-100 transition-opacity">Cookie Policy</a>
+            <Link href="/privacy-policy" className="hover:opacity-100 transition-opacity">Privacy Policy</Link>
+            <Link href="/terms-of-service" className="hover:opacity-100 transition-opacity">Terms of Service</Link>
+            <Link href="/cookie-policy" className="hover:opacity-100 transition-opacity">Cookie Policy</Link>
             <a href="/admin/login" className="hover:opacity-100 transition-opacity font-semibold">Admin Access</a>
           </div>
         </div>

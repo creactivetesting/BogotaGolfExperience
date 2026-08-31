@@ -80,6 +80,15 @@ type BlogPost = {
   updatedAt: string;
 };
 
+type LegalPage = {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 const QUOTE_PACKAGE_TEMPLATES: Record<string, QuotePackageTemplate> = {
   'bgx smart pack': {
     subtitle: '3 Golf Rounds',
@@ -215,7 +224,12 @@ export default function AdminPage() {
   const [courses, setCourses] = useState<GolfCourse[]>([]);
   const [generatedQuotes, setGeneratedQuotes] = useState<GeneratedQuote[]>([]);
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
-  const [activeTab, setActiveTab] = useState<'ambassadors' | 'plans' | 'quote' | 'courses' | 'generatedQuotes' | 'blogs'>('ambassadors');
+  const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
+  const [legalPageSlug, setLegalPageSlug] = useState<'privacy-policy' | 'terms-of-service' | 'cookie-policy'>('privacy-policy');
+  const [legalPageTitle, setLegalPageTitle] = useState('Privacy Policy');
+  const [legalPageContent, setLegalPageContent] = useState('');
+  const [isSavingLegalPage, setIsSavingLegalPage] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ambassadors' | 'plans' | 'quote' | 'courses' | 'generatedQuotes' | 'blogs' | 'terms'>('ambassadors');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -304,13 +318,35 @@ export default function AdminPage() {
     setBlogs(Array.isArray(data) ? data : []);
   }
 
+  async function loadLegalPages() {
+    const response = await fetch('/api/admin/legal');
+    const data = await response.json();
+    const pages = Array.isArray(data) ? data : [];
+    setLegalPages(pages);
+
+    if (pages.length > 0) {
+      const selected = pages.find((page) => page.slug === legalPageSlug) ?? pages[0];
+      setLegalPageTitle(selected.title);
+      setLegalPageContent(selected.content);
+    }
+  }
+
   useEffect(() => {
     void loadAmbassadors();
     void loadPlans();
     void loadCourses();
     void loadGeneratedQuotes();
     void loadBlogs();
+    void loadLegalPages();
   }, []);
+
+  useEffect(() => {
+    const selected = legalPages.find((page) => page.slug === legalPageSlug);
+    if (selected) {
+      setLegalPageTitle(selected.title);
+      setLegalPageContent(selected.content);
+    }
+  }, [legalPageSlug, legalPages]);
 
   useEffect(() => {
     let isMounted = true;
@@ -526,6 +562,36 @@ export default function AdminPage() {
       setMessage(error instanceof Error ? error.message : 'Could not delete the blog post.');
     } finally {
       setIsDeletingBlogId(null);
+    }
+  }
+
+  async function handleSaveLegalPage() {
+    setIsSavingLegalPage(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/admin/legal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: legalPageSlug,
+          title: legalPageTitle.trim(),
+          content: legalPageContent.trim(),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'No se pudo guardar la página legal.');
+      }
+
+      await loadLegalPages();
+      setMessage(`${legalPageTitle} guardada correctamente.`);
+    } catch (error) {
+      console.error('Error guardando página legal:', error);
+      setMessage(error instanceof Error ? error.message : 'No se pudo guardar la página legal.');
+    } finally {
+      setIsSavingLegalPage(false);
     }
   }
 
@@ -1282,11 +1348,12 @@ export default function AdminPage() {
             { id: 'quote', label: 'Quote Generator' },
             { id: 'generatedQuotes', label: 'Generated Quotes' },
             { id: 'blogs', label: 'Blogs' },
+            { id: 'terms', label: 'Terms' },
           ].map((tab) => (
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as 'ambassadors' | 'plans' | 'quote' | 'courses' | 'generatedQuotes' | 'blogs')}
+              onClick={() => setActiveTab(tab.id as 'ambassadors' | 'plans' | 'quote' | 'courses' | 'generatedQuotes' | 'blogs' | 'terms')}
               style={
                 activeTab === tab.id
                   ? { backgroundColor: '#1f2d1f', color: '#ffffff' }
@@ -2000,6 +2067,71 @@ export default function AdminPage() {
               </div>
             </section>
           </div>
+        ) : null}
+
+        {activeTab === 'terms' ? (
+          <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 backdrop-blur-xl">
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-900">Terms</h2>
+                <p className="mt-2 text-sm text-zinc-600">Edita la política legal pública del sitio y actualiza texto conforme cambien las regulaciones.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveLegalPage}
+                disabled={isSavingLegalPage}
+                className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingLegalPage ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
+
+            <div className="mb-6 flex flex-wrap gap-3">
+              {[
+                { slug: 'privacy-policy', label: 'Privacy Policy' },
+                { slug: 'terms-of-service', label: 'Terms of Service' },
+                { slug: 'cookie-policy', label: 'Cookie Policy' },
+              ].map((tab) => (
+                <button
+                  key={tab.slug}
+                  type="button"
+                  onClick={() => setLegalPageSlug(tab.slug as 'privacy-policy' | 'terms-of-service' | 'cookie-policy')}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    legalPageSlug === tab.slug ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="legalTitle" className="mb-2 block text-sm font-medium text-zinc-700">
+                  Page title
+                </label>
+                <input
+                  id="legalTitle"
+                  value={legalPageTitle}
+                  onChange={(event) => setLegalPageTitle(event.target.value)}
+                  className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none transition focus:border-zinc-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="legalContent" className="mb-2 block text-sm font-medium text-zinc-700">
+                  Legal content
+                </label>
+                <textarea
+                  id="legalContent"
+                  value={legalPageContent}
+                  onChange={(event) => setLegalPageContent(event.target.value)}
+                  className="min-h-[420px] w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none transition focus:border-zinc-500"
+                  placeholder="Escribe aquí el texto legal..."
+                />
+              </div>
+            </div>
+          </section>
         ) : null}
 
         {activeTab === 'blogs' ? (
