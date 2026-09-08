@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Check, Users, CreditCard, ChevronRight, Loader2, Info, Minus, Plus, Copy } from "lucide-react";
 
@@ -37,14 +38,31 @@ const STEPS = {
   REVIEW: 1
 };
 
+const WOMPI_DIRECT_PAYMENT_URL = 'https://checkout.wompi.co/l/VPOS_LF35TM';
+
 export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
+  const router = useRouter();
   const [step, setStep] = useState(STEPS.CONFIG);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [exchangeRate, setExchangeRate] = React.useState(4250);
   const [isExchangeRateFallback, setIsExchangeRateFallback] = React.useState(false);
   const [copiedEstimatedPrice, setCopiedEstimatedPrice] = React.useState(false);
-  const { ambassadorName } = useBookingWhatsApp();
+
+  const { control, register, handleSubmit, watch, setValue, formState: { errors } } = useForm<BookingFormValues>({
+    defaultValues: {
+      guestCount: 4,
+    },
+    mode: "onChange"
+  });
+
+  const startDate = watch("startDate");
+  const guestCount = watch("guestCount");
+
+  const { ambassadorName, whatsappUrl } = useBookingWhatsApp({
+    planName: plan?.name,
+    playerCount: guestCount,
+  });
   
   React.useEffect(() => {
     setMounted(true);
@@ -95,16 +113,6 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
 
   const tripNights = getNightsForPlan();
 
-  const { control, register, handleSubmit, watch, setValue, formState: { errors } } = useForm<BookingFormValues>({
-    defaultValues: {
-      guestCount: 4,
-    },
-    mode: "onChange"
-  });
-
-  const startDate = watch("startDate");
-  const guestCount = watch("guestCount");
-
   // Parse price from string (e.g., "$1,590") to number
   const getPricePerPerson = () => {
     if (!plan) return 0;
@@ -132,6 +140,36 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
     }
   };
 
+  const goToBookingCapture = (action: 'chat' | 'pay') => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('intent', 'booking');
+    params.set('source', `plan:${plan.name}`);
+    params.set('plan', plan.name);
+    params.set('playerCount', String(guestCount));
+    params.set('estimatedTotal', String(Math.round(getTotalPrice())));
+    params.set('action', action);
+
+    const referralCode = new URLSearchParams(window.location.search).get('ref');
+    if (referralCode) {
+      params.set('ref', referralCode);
+    }
+
+    router.push(`/book?${params.toString()}`);
+    onClose();
+  };
+
+  const handlePayNow = () => {
+    goToBookingCapture('pay');
+  };
+
+  const handleChatOnWhatsApp = () => {
+    goToBookingCapture('chat');
+  };
+
   const handleNext = () => {
     if (step === STEPS.CONFIG && startDate && guestCount > 0) {
       setStep(STEPS.REVIEW);
@@ -144,14 +182,21 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
 
   const onSubmit = async () => {
     setIsSubmitting(true);
-    // Simulate API call or processing
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Redirect to Wompi
-    const priceInCents = getEstCopPrice() * 100;
-    // We append the amount in cents hoping the link supports pre-filling or is a dynamic link
-    window.location.href = `https://checkout.wompi.co/l/VPOS_LF35TM?amount-in-cents=${priceInCents}`;
-    
+
+    const params = new URLSearchParams();
+    params.set('intent', 'booking');
+    params.set('source', `plan:${plan.name}`);
+    params.set('plan', plan.name);
+    params.set('playerCount', String(guestCount));
+    params.set('estimatedTotal', String(Math.round(getTotalPrice())));
+
+    const referralCode = new URLSearchParams(window.location.search).get('ref');
+    if (referralCode) {
+      params.set('ref', referralCode);
+    }
+
+    router.push(`/book?${params.toString()}`);
+    onClose();
     setIsSubmitting(false);
   };
 
@@ -328,8 +373,8 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
                       </div>
                       <p className="text-sm text-green-700 font-medium">
                         {ambassadorName
-                          ? `You have been invited by ${ambassadorName} and you will receive special treatment, and a Colombian gift.`
-                          : 'You have been invited by your BGX ambassador and you will receive special treatment, and a Colombian gift.'}
+                          ? `You have been invited by ${ambassadorName} and you will receive special treatment and a Colombian gift.`
+                          : 'Your BGX booking is ready to be confirmed. A specialist will review your referral details and next steps.'}
                       </p>
                     </div>
                   </div>
@@ -366,23 +411,23 @@ export function BookingModal({ isOpen, onClose, plan }: BookingModalProps) {
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button 
-              onClick={handleSubmit(onSubmit)} 
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Redirecting...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Pay Now
-                </>
-              )}
-            </Button>
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleChatOnWhatsApp}
+                className="w-full sm:w-auto"
+              >
+                Chat on WhatsApp
+              </Button>
+              <Button
+                onClick={handlePayNow}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Pay now with Wompi
+              </Button>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>

@@ -72,6 +72,31 @@ model GeneratedQuote {
   createdAt           DateTime @default(now())
 }
 
+model CustomerLead {
+  id               String   @id @default(cuid())
+  name             String
+  phone            String
+  email            String
+  country          String
+  city             String?
+  state            String?
+  intent           String   @default("info")
+  selectedPlan     String?
+  playerCount      Int?
+  estimatedTotal   Float?
+  ambassadorName   String?
+  ambassadorCode   String?
+  source           String?
+  consentMarketing Boolean  @default(false)
+  consentPrivacy   Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([ambassadorCode])
+  @@index([intent])
+}
+
 model BlogPost {
   id          String    @id @default(cuid())
   title       String

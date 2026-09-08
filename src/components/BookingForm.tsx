@@ -3,12 +3,34 @@
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Calendar, Phone } from "lucide-react";
-import { useBookingWhatsApp } from '@/hooks/useBookingWhatsApp';
 import { BGX_WHATSAPP_NUMBER } from '@/lib/whatsapp';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export function BookingForm() {
-  const { whatsappUrl } = useBookingWhatsApp();
+  const router = useRouter();
   const whatsappNumber = BGX_WHATSAPP_NUMBER;
+  const [referralCode, setReferralCode] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    setReferralCode(new URLSearchParams(window.location.search).get('ref') ?? '');
+  }, []);
+
+  const handleOpenLeadForm = () => {
+    const params = new URLSearchParams();
+    params.set('intent', 'info');
+    params.set('source', 'booking-form-whatsapp');
+
+    if (referralCode) {
+      params.set('ref', referralCode);
+    }
+
+    router.push(`/book?${params.toString()}`);
+  };
 
   return (
     <section id="contact" className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-primary/5 via-background to-accent/5 golf-ball-texture relative overflow-hidden">
@@ -35,7 +57,7 @@ export function BookingForm() {
             <Button 
               size="lg" 
               className="bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-6 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center gap-3"
-              onClick={() => window.open(whatsappUrl, '_blank')}
+              onClick={handleOpenLeadForm}
             >
               <Phone className="w-6 h-6" />
               <span className="text-lg">Chat on WhatsApp</span>
@@ -83,6 +105,7 @@ export function BookingForm() {
           </CardContent>
         </Card>
       </div>
+
     </section>
   );
 }

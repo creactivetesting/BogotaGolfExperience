@@ -6,6 +6,8 @@ import { buildBookingWhatsAppMessage, buildBookingWhatsAppUrl } from '@/lib/what
 type UseBookingWhatsAppOptions = {
   ambassadorName?: string | null;
   referralCode?: string | null;
+  planName?: string | null;
+  playerCount?: number | null;
 };
 
 function resolveReferralCodeFromPath(pathname: string) {
@@ -23,7 +25,7 @@ function resolveReferralCodeFromPath(pathname: string) {
 }
 
 export function useBookingWhatsApp(options: UseBookingWhatsAppOptions = {}) {
-  const { ambassadorName: ambassadorNameFromProps, referralCode } = options;
+  const { ambassadorName: ambassadorNameFromProps, referralCode, planName, playerCount } = options;
   const normalizedAmbassadorNameFromProps = ambassadorNameFromProps?.trim() ?? '';
   const [locationReferralCode, setLocationReferralCode] = useState('');
 
@@ -122,12 +124,20 @@ export function useBookingWhatsApp(options: UseBookingWhatsAppOptions = {}) {
   const resolvedAmbassadorName = normalizedAmbassadorNameFromProps || (resolvedReferralCode ? fetchedAmbassadorName : '');
 
   const message = useMemo(() => {
-    return buildBookingWhatsAppMessage(resolvedAmbassadorName);
-  }, [resolvedAmbassadorName]);
+    return buildBookingWhatsAppMessage({
+      ambassadorName: resolvedAmbassadorName,
+      planName,
+      playerCount,
+    });
+  }, [resolvedAmbassadorName, planName, playerCount]);
 
   const whatsappUrl = useMemo(() => {
-    return buildBookingWhatsAppUrl(resolvedAmbassadorName);
-  }, [resolvedAmbassadorName]);
+    return buildBookingWhatsAppUrl({
+      ambassadorName: resolvedAmbassadorName,
+      planName,
+      playerCount,
+    });
+  }, [resolvedAmbassadorName, planName, playerCount]);
 
   return {
     ambassadorName: resolvedAmbassadorName,

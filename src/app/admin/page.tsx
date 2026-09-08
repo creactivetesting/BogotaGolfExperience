@@ -67,6 +67,27 @@ type GeneratedQuote = {
   createdAt: string;
 };
 
+type CustomerLead = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  country: string;
+  city: string | null;
+  state: string | null;
+  intent: string;
+  selectedPlan: string | null;
+  playerCount: number | null;
+  estimatedTotal: number | null;
+  ambassadorName: string | null;
+  ambassadorCode: string | null;
+  source: string | null;
+  consentMarketing: boolean;
+  consentPrivacy: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type BlogPost = {
   id: string;
   title: string;
@@ -223,13 +244,18 @@ export default function AdminPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [courses, setCourses] = useState<GolfCourse[]>([]);
   const [generatedQuotes, setGeneratedQuotes] = useState<GeneratedQuote[]>([]);
+  const [customerLeads, setCustomerLeads] = useState<CustomerLead[]>([]);
+  const [leadSearch, setLeadSearch] = useState('');
+  const [leadFilterSource, setLeadFilterSource] = useState('all');
+  const [leadFilterAmbassador, setLeadFilterAmbassador] = useState('all');
+  const [isClearingLeads, setIsClearingLeads] = useState(false);
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
   const [legalPageSlug, setLegalPageSlug] = useState<'privacy-policy' | 'terms-of-service' | 'cookie-policy'>('privacy-policy');
   const [legalPageTitle, setLegalPageTitle] = useState('Privacy Policy');
   const [legalPageContent, setLegalPageContent] = useState('');
   const [isSavingLegalPage, setIsSavingLegalPage] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ambassadors' | 'plans' | 'quote' | 'courses' | 'generatedQuotes' | 'blogs' | 'terms'>('ambassadors');
+  const [activeTab, setActiveTab] = useState<'ambassadors' | 'plans' | 'quote' | 'courses' | 'generatedQuotes' | 'leads' | 'blogs' | 'terms'>('ambassadors');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -312,6 +338,42 @@ export default function AdminPage() {
     setGeneratedQuotes(data);
   }
 
+  async function loadCustomerLeads() {
+    const response = await fetch('/api/admin/leads', { cache: 'no-store' });
+    const data = await response.json();
+    setCustomerLeads(Array.isArray(data) ? data : []);
+  }
+
+  async function handleClearTestLeads() {
+    const confirmed = window.confirm('This will permanently delete all current potential-client test records. Continue?');
+    if (!confirmed) {
+      return;
+    }
+
+    setIsClearingLeads(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/admin/leads', {
+        method: 'DELETE',
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Unable to clear test leads.');
+      }
+
+      setCustomerLeads([]);
+      setMessage(data?.message || 'All potential-client test data was cleared successfully.');
+    } catch (error) {
+      console.error('Error clearing leads:', error);
+      setMessage(error instanceof Error ? error.message : 'Unable to clear test leads.');
+    } finally {
+      setIsClearingLeads(false);
+    }
+  }
+
   async function loadBlogs() {
     const response = await fetch('/api/admin/blogs');
     const data = await response.json();
@@ -336,9 +398,16 @@ export default function AdminPage() {
     void loadPlans();
     void loadCourses();
     void loadGeneratedQuotes();
+    void loadCustomerLeads();
     void loadBlogs();
     void loadLegalPages();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'leads') {
+      void loadCustomerLeads();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const selected = legalPages.find((page) => page.slug === legalPageSlug);
@@ -870,6 +939,31 @@ export default function AdminPage() {
     });
   }
 
+  function handleGenerateQuoteFromLead(lead: CustomerLead) {
+    setActiveTab('quote');
+    setCustomerName(lead.name || '');
+
+    const matchingPlan = plans.find((plan) => normalizeMatchValue(plan.name) === normalizeMatchValue(lead.selectedPlan ?? ''));
+    const nextSelectedPlanId = matchingPlan?.id ?? plans[0]?.id ?? '';
+    setSelectedPlanId(nextSelectedPlanId);
+
+    const nextPlayerCount = lead.playerCount && lead.playerCount > 0 ? String(lead.playerCount) : '4';
+    setPlayerCount(nextPlayerCount);
+
+    const matchingAmbassador = ambassadors.find((ambassador) => {
+      if (lead.ambassadorCode && normalizeMatchValue(ambassador.code) === normalizeMatchValue(lead.ambassadorCode)) {
+        return true;
+      }
+
+      return lead.ambassadorName ? normalizeMatchValue(ambassador.name) === normalizeMatchValue(lead.ambassadorName) : false;
+    });
+    setSelectedAmbassadorId(matchingAmbassador?.id ?? '');
+
+    const nextCourses = courses.length > 0 ? courses.map((course) => course.id) : [];
+    setSelectedQuoteCourseIds(nextCourses);
+    setMessage(`Quote form prefilled from ${lead.name}'s lead.`);
+  }
+
   async function handleUpdateQuoteStatus(quoteId: string, nextStatus: QuoteStatus) {
     setIsUpdatingQuoteStatusId(quoteId);
     setMessage('');
@@ -1312,6 +1406,27 @@ export default function AdminPage() {
   const coursesPageOnlyCourses = courses.filter((course) => !course.homeFeatured);
   const selectedQuoteCourses = courses.filter((course) => selectedQuoteCourseIds.includes(course.id));
   const quotePackageTemplate = getQuotePackageTemplate(quotePlan?.name);
+  const leadSourceOptions = Array.from(new Set((customerLeads.map((lead) => lead.source).filter(Boolean)) as string[]));
+  const leadAmbassadorOptions = Array.from(new Set((customerLeads.map((lead) => lead.ambassadorName).filter(Boolean)) as string[]));
+  const filteredCustomerLeads = [...customerLeads]
+    .sort((firstLead, secondLead) => new Date(secondLead.createdAt).getTime() - new Date(firstLead.createdAt).getTime())
+    .filter((lead) => {
+      const searchValue = leadSearch.trim().toLowerCase();
+
+      const matchesSearch =
+        !searchValue ||
+        lead.name.toLowerCase().includes(searchValue) ||
+        lead.email.toLowerCase().includes(searchValue) ||
+        lead.phone.toLowerCase().includes(searchValue) ||
+        (lead.city ?? '').toLowerCase().includes(searchValue) ||
+        (lead.country ?? '').toLowerCase().includes(searchValue);
+
+      const matchesSource = leadFilterSource === 'all' || (lead.source ?? 'Sin origen') === leadFilterSource;
+      const matchesAmbassador =
+        leadFilterAmbassador === 'all' || (lead.ambassadorName ?? 'Sin embajador') === leadFilterAmbassador;
+
+      return matchesSearch && matchesSource && matchesAmbassador;
+    });
 
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-16 text-zinc-900 sm:px-6 lg:px-8">
@@ -1347,13 +1462,14 @@ export default function AdminPage() {
             { id: 'courses', label: 'Campos Activos' },
             { id: 'quote', label: 'Quote Generator' },
             { id: 'generatedQuotes', label: 'Generated Quotes' },
+            { id: 'leads', label: 'Potential Clients' },
             { id: 'blogs', label: 'Blogs' },
             { id: 'terms', label: 'Terms' },
           ].map((tab) => (
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as 'ambassadors' | 'plans' | 'quote' | 'courses' | 'generatedQuotes' | 'blogs' | 'terms')}
+              onClick={() => setActiveTab(tab.id as 'ambassadors' | 'plans' | 'quote' | 'courses' | 'generatedQuotes' | 'leads' | 'blogs' | 'terms')}
               style={
                 activeTab === tab.id
                   ? { backgroundColor: '#1f2d1f', color: '#ffffff' }
@@ -1852,6 +1968,172 @@ export default function AdminPage() {
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        ) : null}
+
+        {activeTab === 'leads' ? (
+          <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 backdrop-blur-xl">
+            <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-900">Potential Clients</h2>
+                <p className="mt-2 text-sm text-zinc-600">
+                  Leads generados desde el formulario público, con consentimiento y origen del cliente.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void handleClearTestLeads()}
+                disabled={isClearingLeads || customerLeads.length === 0}
+                className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isClearingLeads ? 'Clearing...' : 'Clear test leads'}
+              </button>
+            </div>
+
+            <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex-1">
+                <label htmlFor="lead-search" className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                  Buscar lead
+                </label>
+                <input
+                  id="lead-search"
+                  value={leadSearch}
+                  onChange={(event) => setLeadSearch(event.target.value)}
+                  placeholder="Nombre, email, teléfono o ciudad"
+                  className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:w-[420px]">
+                <div>
+                  <label htmlFor="lead-source-filter" className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                    Origen
+                  </label>
+                  <select
+                    id="lead-source-filter"
+                    value={leadFilterSource}
+                    onChange={(event) => setLeadFilterSource(event.target.value)}
+                    className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
+                  >
+                    <option value="all">Todos</option>
+                    {leadSourceOptions.map((source) => (
+                      <option key={source} value={source}>{source}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="lead-ambassador-filter" className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                    Embajador
+                  </label>
+                  <select
+                    id="lead-ambassador-filter"
+                    value={leadFilterAmbassador}
+                    onChange={(event) => setLeadFilterAmbassador(event.target.value)}
+                    className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
+                  >
+                    <option value="all">Todos</option>
+                    {leadAmbassadorOptions.map((ambassador) => (
+                      <option key={ambassador} value={ambassador}>{ambassador}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {filteredCustomerLeads.length === 0 ? (
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-center text-zinc-600">
+                No hay leads que coincidan con los filtros actuales.
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-zinc-200">
+                <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
+                  <thead className="bg-zinc-100 text-zinc-800">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Fecha</th>
+                      <th className="px-4 py-3 font-medium">Cliente</th>
+                      <th className="px-4 py-3 font-medium">Contacto</th>
+                      <th className="px-4 py-3 font-medium">Ubicación</th>
+                      <th className="px-4 py-3 font-medium">Intent</th>
+                      <th className="px-4 py-3 font-medium">Cuota</th>
+                      <th className="px-4 py-3 font-medium">Origen</th>
+                      <th className="px-4 py-3 font-medium">Embajador</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200 bg-white">
+                    {filteredCustomerLeads.map((lead) => (
+                      <tr key={lead.id} className="align-top text-zinc-700">
+                        <td className="px-4 py-3">
+                          {new Date(lead.createdAt).toLocaleString('es-CO', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-zinc-900">{lead.name}</div>
+                          {lead.selectedPlan ? (
+                            <div className="mt-1 text-xs text-zinc-500">Plan: {lead.selectedPlan}</div>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>{lead.email}</div>
+                          <div className="mt-1 text-xs text-zinc-500">{lead.phone}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>{lead.country}</div>
+                          <div className="mt-1 text-xs text-zinc-500">{lead.city || lead.state || 'Sin ciudad'}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700">
+                            {lead.intent}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-zinc-900">
+                            {lead.playerCount ? `${lead.playerCount} players` : 'Sin jugadores'}
+                          </div>
+                          <div className="mt-1 text-xs text-zinc-500">
+                            {lead.estimatedTotal != null ? `$${lead.estimatedTotal.toLocaleString('en-US')}` : 'Sin total'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-xs text-zinc-600">{lead.source || 'Sin origen'}</div>
+                          <div className="mt-2 text-[11px] text-zinc-500">
+                            Marketing: {lead.consentMarketing ? 'Sí' : 'No'}
+                          </div>
+                          <div className="text-[11px] text-zinc-500">
+                            Privacy: {lead.consentPrivacy ? 'Sí' : 'No'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {lead.ambassadorName ? (
+                            <>
+                              <div className="font-medium text-zinc-900">{lead.ambassadorName}</div>
+                              <div className="mt-1 text-xs text-zinc-500">{lead.ambassadorCode || 'Sin código'}</div>
+                            </>
+                          ) : (
+                            <span className="text-xs text-zinc-500">Sin embajador</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleGenerateQuoteFromLead(lead)}
+                            className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-zinc-900 transition hover:bg-emerald-800"
+                          >
+                            Generate
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

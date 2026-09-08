@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Calendar, Clock, Users, Star, CheckCircle, MapPin, Utensils, Car, Trophy, Info } from "lucide-react";
-import { BookingModal } from "./BookingModal";
+import { useRouter } from "next/navigation";
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { BookingModal } from './BookingModal';
 import bgxSmartPackImage from "@/assets/optimized/bogota-golf-hero.webp";
 import bgxElitePackImage from "@/assets/optimized/bogota-golf-group-celebration.webp";
 
@@ -21,7 +22,17 @@ type PublicPlan = {
 export function GolfPlans() {
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
   const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    setReferralCode(new URLSearchParams(window.location.search).get('ref') ?? '');
+  }, []);
 
   const scrollToContact = () => {
     const contactSection = document.getElementById('contact');
@@ -31,7 +42,12 @@ export function GolfPlans() {
   };
 
   const handleBookClick = (plan: any) => {
-    setSelectedPlan(plan);
+    setSelectedPlan({
+      name: plan.name,
+      price: `$${plan.basePrice.toLocaleString('en-US')}`,
+      duration: plan.name.toLowerCase().includes('elite') ? '5 Days / 4 Nights' : '4 Days / 3 Nights',
+      subtitle: plan.name.toLowerCase().includes('elite') ? '4 Golf Rounds' : '3 Golf Rounds',
+    });
     setIsBookingModalOpen(true);
   };
 
@@ -80,6 +96,7 @@ export function GolfPlans() {
   }));
 
   return (
+    <>
     <section id="plans" className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-primary/5 via-background to-accent/5 golf-ball-texture relative overflow-hidden">
       {/* Decorative Elements */}
       <div className="absolute top-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl"></div>
@@ -203,7 +220,18 @@ export function GolfPlans() {
                   <Button 
                     variant="outline" 
                     className="w-full border-primary/20 hover:bg-primary/5"
-                    onClick={scrollToContact}
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      params.set('intent', 'info');
+                      params.set('source', 'golf-plans-customize');
+                      params.set('plan', plan.name);
+
+                      if (referralCode) {
+                        params.set('ref', referralCode);
+                      }
+
+                      router.push(`/book?${params.toString()}`);
+                    }}
                   >
                     Customize This Trip
                   </Button>
@@ -250,11 +278,15 @@ export function GolfPlans() {
         </div>
       </div>
 
-      <BookingModal 
-        isOpen={isBookingModalOpen} 
-        onClose={() => setIsBookingModalOpen(false)} 
-        plan={selectedPlan} 
-      />
     </section>
+
+    {selectedPlan ? (
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
+        plan={selectedPlan}
+      />
+    ) : null}
+    </>
   );
 }

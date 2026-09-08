@@ -7,18 +7,48 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import bgxLogo from "@/assets/optimized/bgx-logo.webp";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useBookingWhatsApp } from '@/hooks/useBookingWhatsApp';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
   const pathname = usePathname();
   const router = useRouter();
   const isCoursesPage = pathname === '/courses';
-  const { whatsappUrl } = useBookingWhatsApp();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const nextReferralCode = new URLSearchParams(window.location.search).get('ref') ?? '';
+    setReferralCode(nextReferralCode);
+  }, []);
 
   const handleBookTour = () => {
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     setMobileMenuOpen(false);
+
+    if (pathname !== '/') {
+      const params = new URLSearchParams();
+      if (referralCode) {
+        params.set('ref', referralCode);
+      }
+
+      router.push(`/?${params.toString()}#plans`);
+      return;
+    }
+
+    const plansSection = document.getElementById('plans');
+    if (plansSection) {
+      plansSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (referralCode) {
+      params.set('ref', referralCode);
+    }
+
+    router.push(`/?${params.toString()}#plans`);
   };
   
   // Prevent body scroll when mobile menu is open
@@ -202,6 +232,7 @@ export function Header() {
           </div>
         )}
       </div>
+
     </header>
   );
 }
