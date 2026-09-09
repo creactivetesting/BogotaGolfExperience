@@ -55,6 +55,7 @@ type GeneratedQuote = {
   planName: string;
   packageSubtitle: string | null;
   packageDuration: string | null;
+  hotelName: string | null;
   playerCount: number;
   ambassadorName: string | null;
   ambassadorCode: string | null;
@@ -116,7 +117,6 @@ const QUOTE_PACKAGE_TEMPLATES: Record<string, QuotePackageTemplate> = {
     duration: '4 Days / 3 Nights',
     includes: [
       '3 Golf Rounds',
-      '4 nights in 4-star centrally located hotel',
       'Daily breakfast included',
       'Private transportation throughout your stay',
       'Professional caddies-coaches at every round',
@@ -130,7 +130,6 @@ const QUOTE_PACKAGE_TEMPLATES: Record<string, QuotePackageTemplate> = {
     duration: '5 Days / 4 Nights',
     includes: [
       '4 Golf Rounds',
-      '5 nights in 4-star centrally located hotel',
       'Daily breakfast included',
       'Private transportation throughout your stay',
       'Professional caddies-coaches at every round',
@@ -140,6 +139,8 @@ const QUOTE_PACKAGE_TEMPLATES: Record<string, QuotePackageTemplate> = {
     ],
   },
 };
+
+const HOTEL_OPTIONS = ['Sonesta 127', 'Sabana Park'];
 
 function getQuotePackageTemplate(planName?: string) {
   if (!planName) {
@@ -268,6 +269,7 @@ export default function AdminPage() {
   const [customerName, setCustomerName] = useState('');
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [playerCount, setPlayerCount] = useState('4');
+  const [selectedHotelName, setSelectedHotelName] = useState('Sonesta 127');
   const [selectedAmbassadorId, setSelectedAmbassadorId] = useState('');
   const [selectedQuoteCourseIds, setSelectedQuoteCourseIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -1002,6 +1004,7 @@ export default function AdminPage() {
       planName: quotePlan.name,
       packageSubtitle: quotePackageTemplate?.subtitle,
       packageDuration: quotePackageTemplate?.duration,
+      hotelName: selectedHotelName.trim() || null,
       playerCount: parsedPlayers,
       ambassadorName: selectedAmbassador?.name,
       ambassadorCode: selectedAmbassador?.code,
@@ -1067,6 +1070,7 @@ export default function AdminPage() {
       const packageDurationLabel = quotePackageTemplate
         ? normalizePdfText(`${quotePackageTemplate.subtitle} | ${quotePackageTemplate.duration}`)
         : 'Custom package';
+      const hotelLabel = normalizePdfText(selectedHotelName.trim() || 'Hotel not selected');
       const selectedCourseNames = selectedQuoteCourses.map((course) => normalizePdfText(course.name));
 
       const logoDataUrl = await loadImageDataUrl(bgxLogo.src);
@@ -1266,6 +1270,7 @@ export default function AdminPage() {
       const overviewCardRows: Array<[string, string]> = [
         ['Issue Date', today],
         ['Selected Plan', quotePlan?.name ?? 'No plan selected'],
+        ['Hotel', hotelLabel],
         ['Package Duration', packageDurationLabel],
       ];
       const cardHeight = Math.max(measureInfoCardHeight(cardWidth, clientCardRows), measureInfoCardHeight(cardWidth, overviewCardRows));
@@ -1922,6 +1927,7 @@ export default function AdminPage() {
                       <th className="px-4 py-3 font-medium">Fecha</th>
                       <th className="px-4 py-3 font-medium">Cliente</th>
                       <th className="px-4 py-3 font-medium">Plan</th>
+                      <th className="px-4 py-3 font-medium">Hotel</th>
                       <th className="px-4 py-3 font-medium">Jugadores</th>
                       <th className="px-4 py-3 font-medium">Campos</th>
                       <th className="px-4 py-3 font-medium">Total</th>
@@ -1945,6 +1951,7 @@ export default function AdminPage() {
                           </td>
                           <td className="px-4 py-3 font-medium">{quote.customerName}</td>
                           <td className="px-4 py-3">{quote.planName}</td>
+                          <td className="px-4 py-3">{quote.hotelName || 'Sin hotel'}</td>
                           <td className="px-4 py-3">{quote.playerCount}</td>
                           <td className="px-4 py-3">
                             <p>{selectedCourses.length} selected</p>
@@ -2180,6 +2187,24 @@ export default function AdminPage() {
                 </div>
 
                 <div>
+                  <label htmlFor="hotelSelect" className="mb-2 block text-sm font-medium text-zinc-700">
+                    Hotel
+                  </label>
+                  <select
+                    id="hotelSelect"
+                    value={selectedHotelName}
+                    onChange={(event) => setSelectedHotelName(event.target.value)}
+                    className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none transition focus:border-zinc-500"
+                  >
+                    {HOTEL_OPTIONS.map((hotelName) => (
+                      <option key={hotelName} value={hotelName} className="text-zinc-900">
+                        {hotelName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
                   <label htmlFor="playerCount" className="mb-2 block text-sm font-medium text-zinc-700">
                     Número de jugadores
                   </label>
@@ -2281,6 +2306,8 @@ export default function AdminPage() {
                 <p className="mt-1 text-lg font-semibold text-zinc-900">{customerName || 'Sin nombre'}</p>
                 <p className="mt-4 text-sm text-zinc-600">Plan</p>
                 <p className="mt-1 text-lg font-semibold text-zinc-900">{quotePlan?.name || 'Sin plan seleccionado'}</p>
+                <p className="mt-4 text-sm text-zinc-600">Hotel</p>
+                <p className="mt-1 text-lg font-semibold text-zinc-900">{selectedHotelName || 'Sin hotel seleccionado'}</p>
                 {quotePackageTemplate ? (
                   <p className="mt-1 text-sm text-zinc-600">
                     {quotePackageTemplate.subtitle} • {quotePackageTemplate.duration}

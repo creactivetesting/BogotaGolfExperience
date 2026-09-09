@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       planName,
       packageSubtitle,
       packageDuration,
+      hotelName,
       playerCount,
       ambassadorName,
       ambassadorCode,
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       planName?: string;
       packageSubtitle?: string;
       packageDuration?: string;
+      hotelName?: string;
       playerCount?: number;
       ambassadorName?: string;
       ambassadorCode?: string;
@@ -71,6 +73,7 @@ export async function POST(request: Request) {
         planName,
         packageSubtitle: packageSubtitle || null,
         packageDuration: packageDuration || null,
+        hotelName: hotelName || null,
         playerCount,
         ambassadorName: ambassadorName || null,
         ambassadorCode: ambassadorCode || null,
