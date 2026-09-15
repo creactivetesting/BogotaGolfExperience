@@ -549,10 +549,7 @@ export default function AdminPage() {
 
     try {
       const dataUrl = await convertFileToDataUrl(file);
-      const existingImages = courseEditorImages
-        .split(/\n|,/) 
-        .map((image) => image.trim())
-        .filter(Boolean);
+      const existingImages = parseCourseImageEntries(courseEditorImages);
 
       if (existingImages.includes(dataUrl)) {
         return;
@@ -1002,6 +999,13 @@ export default function AdminPage() {
     }
   }
 
+  function parseCourseImageEntries(value: string) {
+    return value
+      .split(/\r?\n/)
+      .map((image) => image.trim())
+      .filter(Boolean);
+  }
+
   function openCourseEditor(course: GolfCourse) {
     setSelectedCourseEditorId(course.id);
     setCourseEditorDescription(course.description ?? '');
@@ -1016,10 +1020,7 @@ export default function AdminPage() {
       return;
     }
 
-    const existingImages = courseEditorImages
-      .split(/\n|,/) 
-      .map((image) => image.trim())
-      .filter(Boolean);
+    const existingImages = parseCourseImageEntries(courseEditorImages);
 
     if (existingImages.includes(sanitized)) {
       setCourseImageInput('');
@@ -1032,10 +1033,7 @@ export default function AdminPage() {
   }
 
   function removeCourseImageUrl(urlToRemove: string) {
-    const nextImages = courseEditorImages
-      .split(/\n|,/) 
-      .map((image) => image.trim())
-      .filter(Boolean)
+    const nextImages = parseCourseImageEntries(courseEditorImages)
       .filter((image) => image !== urlToRemove)
       .join('\n');
 
@@ -1043,11 +1041,7 @@ export default function AdminPage() {
   }
 
   function moveCourseImageToPrimary(urlToPromote: string) {
-    const nextImages = courseEditorImages
-      .split(/\n|,/) 
-      .map((image) => image.trim())
-      .filter(Boolean)
-      .filter((image) => image !== urlToPromote);
+    const nextImages = parseCourseImageEntries(courseEditorImages).filter((image) => image !== urlToPromote);
 
     setCourseEditorImages([urlToPromote, ...nextImages].join('\n'));
   }
@@ -1157,10 +1151,7 @@ export default function AdminPage() {
         .map((feature) => feature.trim())
         .filter(Boolean);
 
-      const images = courseEditorImages
-        .split(/\n|,/)
-        .map((image) => image.trim())
-        .filter(Boolean);
+      const images = parseCourseImageEntries(courseEditorImages);
 
       const response = await fetch('/api/admin/courses', {
         method: 'PATCH',
@@ -2270,35 +2261,51 @@ export default function AdminPage() {
                       </div>
 
                       {courseEditorImages ? (
-                        <div className="space-y-2">
-                          {courseEditorImages
-                            .split(/\n|,/) 
-                            .map((image) => image.trim())
-                            .filter(Boolean)
-                            .map((image, index) => (
+                        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                          <div className="mb-2 flex items-center justify-between">
+                            <p className="text-xs font-semibold text-zinc-700">Fotos guardadas</p>
+                            <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[10px] text-zinc-600">
+                              {parseCourseImageEntries(courseEditorImages).length}
+                            </span>
+                          </div>
+
+                          <div className="grid max-h-60 grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3">
+                            {parseCourseImageEntries(courseEditorImages).map((image, index) => (
                               <div
                                 key={`${image}-${index}`}
-                                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2"
+                                className="overflow-hidden rounded-xl border border-zinc-200 bg-white"
                               >
-                                <span className="max-w-[70%] truncate text-xs text-zinc-700">{image}</span>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => moveCourseImageToPrimary(image)}
-                                    className="rounded-full border border-zinc-300 px-2 py-1 text-[10px] font-semibold text-zinc-700 transition hover:bg-zinc-100"
-                                  >
-                                    Principal
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeCourseImageUrl(image)}
-                                    className="rounded-full border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition hover:bg-red-100"
-                                  >
-                                    Quitar
-                                  </button>
+                                <img
+                                  src={image}
+                                  alt={`Foto ${index + 1}`}
+                                  className="h-24 w-full object-cover"
+                                  loading="lazy"
+                                />
+
+                                <div className="space-y-2 p-2">
+                                  <p className="text-center text-[10px] font-semibold text-zinc-700">
+                                    Foto {index + 1}
+                                  </p>
+                                  <div className="flex gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => moveCourseImageToPrimary(image)}
+                                      className="flex-1 rounded-full border border-zinc-300 px-2 py-1 text-[10px] font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                                    >
+                                      Principal
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeCourseImageUrl(image)}
+                                      className="flex-1 rounded-full border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition hover:bg-red-100"
+                                    >
+                                      Quitar
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             ))}
+                          </div>
                         </div>
                       ) : (
                         <p className="text-xs text-zinc-500">Todavía no hay fotos guardadas para este campo.</p>
@@ -2309,7 +2316,8 @@ export default function AdminPage() {
                       type="button"
                       onClick={() => void handleSaveCourseContent()}
                       disabled={isSavingCourseContent}
-                      className="w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70"
+                      style={{ backgroundColor: '#1f2d1f', color: '#ffffff' }}
+                      className="w-full rounded-xl px-4 py-3 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {isSavingCourseContent ? 'Guardando...' : 'Guardar contenido del campo'}
                     </button>

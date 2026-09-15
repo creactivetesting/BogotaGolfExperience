@@ -12,10 +12,20 @@ import { Footer } from './Footer';
 import { Header } from './Header';
 import { TransitionLink } from './TransitionLink';
 
+type PublicCourse = {
+  id: string;
+  name: string;
+  description: string | null;
+  features: string[];
+  images: string[];
+  isAvailable: boolean;
+  homeFeatured: boolean;
+};
+
 export function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [activeCourseNames, setActiveCourseNames] = useState<string[] | null>(null);
+  const [publicCourses, setPublicCourses] = useState<PublicCourse[]>([]);
 
   const scrollToContact = () => {
     const contactSection = document.getElementById('contact');
@@ -58,14 +68,14 @@ export function CoursesPage() {
         const data = await response.json();
 
         if (Array.isArray(data)) {
-          setActiveCourseNames(data.map((course: { name: string }) => course.name));
+          setPublicCourses(data as PublicCourse[]);
           return;
         }
 
-        setActiveCourseNames([]);
+        setPublicCourses([]);
       } catch (error) {
         console.error('No se pudieron cargar los campos activos:', error);
-        setActiveCourseNames(null);
+        setPublicCourses([]);
       }
     }
 
@@ -502,9 +512,30 @@ export function CoursesPage() {
   ];
 
   const courses =
-    activeCourseNames === null
-      ? allCourses
-      : allCourses.filter((course) => activeCourseNames.includes(course.name));
+    publicCourses.length > 0
+      ? publicCourses.map((course) => ({
+          name: course.name,
+          description: course.description?.trim() || 'Golf experience in Bogotá.',
+          type: 'Featured',
+          holes: 18,
+          difficulty: 'Varied',
+          features: course.features && course.features.length > 0 ? course.features : ['Golf experience', 'Bogotá'],
+          rating: 4.8,
+          image:
+            course.images && course.images.length > 0
+              ? course.images[0]
+              : 'https://images.unsplash.com/photo-1715761920143-23ec33f378d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnb2xmJTIwY291cnNlJTIwbW91bnRhaW5zJTIwc2NlbmljfGVufDF8fHx8MTc1OTE3NjY4Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+          location: 'Bogotá, Colombia',
+          established: '—',
+          yardage: '—',
+          par: 'Par 72',
+          services: ['Course access', 'Private booking support'],
+          hours: 'By request',
+          greenFee: 'Ask for quote',
+          detailedDescription: course.description?.trim() || 'Exclusive golf experience in Bogotá and its surroundings.',
+          highlights: course.features && course.features.length > 0 ? course.features : ['Featured course', 'Private booking support'],
+        }))
+      : allCourses;
 
   useEffect(() => {
     if (selectedCourse !== null && !courses[selectedCourse]) {
