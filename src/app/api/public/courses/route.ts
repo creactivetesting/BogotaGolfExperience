@@ -54,8 +54,8 @@ export async function GET(request: Request) {
     const courses = await prisma.golfCourse.findMany({
       where: {
         ...(featuredOnly
-          ? { homeFeatured: true }
-          : { isAvailable: true, homeFeatured: false }),
+          ? { homeFeatured: true, isAvailable: true }
+          : { isAvailable: true }),
       },
       orderBy: { createdAt: 'asc' },
     });
