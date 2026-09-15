@@ -513,28 +513,34 @@ export function CoursesPage() {
 
   const courses =
     publicCourses.length > 0
-      ? publicCourses.map((course) => ({
-          name: course.name,
-          description: course.description?.trim() || 'Golf experience in Bogotá.',
-          type: 'Featured',
-          holes: 18,
-          difficulty: 'Varied',
-          features: course.features && course.features.length > 0 ? course.features : ['Golf experience', 'Bogotá'],
-          rating: typeof course.rating === 'number' ? course.rating : 4.8,
-          image:
-            course.images && course.images.length > 0
-              ? course.images[0]
-              : 'https://images.unsplash.com/photo-1715761920143-23ec33f378d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnb2xmJTIwY291cnNlJTIwbW91bnRhaW5zJTIwc2NlbmljfGVufDF8fHx8MTc1OTE3NjY4Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-          location: 'Bogotá, Colombia',
-          established: '—',
-          yardage: '—',
-          par: 'Par 72',
-          services: ['Course access', 'Private booking support'],
-          hours: 'By request',
-          greenFee: 'Ask for quote',
-          detailedDescription: course.description?.trim() || 'Exclusive golf experience in Bogotá and its surroundings.',
-          highlights: course.features && course.features.length > 0 ? course.features : ['Featured course', 'Private booking support'],
-        }))
+      ? publicCourses.map((course) => {
+          const safeFeatures = Array.isArray(course.features) ? course.features : [];
+          const safeImages = Array.isArray(course.images) ? course.images : [];
+          const descriptionText = typeof course.description === 'string' ? course.description.trim() : '';
+
+          return {
+            name: course.name,
+            description: descriptionText || 'Golf experience in Bogotá.',
+            type: 'Featured',
+            holes: 18,
+            difficulty: 'Varied',
+            features: safeFeatures.length > 0 ? safeFeatures : ['Golf experience', 'Bogotá'],
+            rating: typeof course.rating === 'number' ? course.rating : 4.8,
+            image:
+              safeImages.length > 0
+                ? safeImages[0]
+                : 'https://images.unsplash.com/photo-1715761920143-23ec33f378d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnb2xmJTIwY291cnNlJTIwbW91bnRhaW5zJTIwc2NlbmljfGVufDF8fHx8MTc1OTE3NjY4Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+            location: 'Bogotá, Colombia',
+            established: '—',
+            yardage: '—',
+            par: 'Par 72',
+            services: ['Course access', 'Private booking support'],
+            hours: 'By request',
+            greenFee: 'Ask for quote',
+            detailedDescription: descriptionText || 'Exclusive golf experience in Bogotá and its surroundings.',
+            highlights: safeFeatures.length > 0 ? safeFeatures : ['Featured course', 'Private booking support'],
+          };
+        })
       : allCourses;
 
   useEffect(() => {

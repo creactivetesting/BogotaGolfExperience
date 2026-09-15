@@ -66,39 +66,41 @@ export function GolfPlans() {
     void loadPlans();
   }, []);
 
-  const mappedPlans = plans.map((plan, index) => ({
-    ...plan,
-    subtitle: index === 0 ? '3 Golf Rounds' : '4 Golf Rounds',
-    duration: index === 0 ? '4 Days / 3 Nights' : '5 Days / 4 Nights',
-    price: `$${plan.basePrice.toLocaleString('en-US')}`,
-    description: plan.description,
-    popular: index === 0,
-    popularLabel: index === 0 ? 'Smart Value' : 'Premium',
-    image: index === 0 ? bgxSmartPackImage : bgxElitePackImage,
-    idealFor: index === 0
-      ? 'Buddy groups looking for authentic golf + culture in Bogotá.'
-      : 'Golf travelers who want more holes, more stories, and a deeper connection to the city.',
-    courses: index === 0 ? ['2 Standard Golf Club', '1 Private Club'] : ['2 Standard Golf Club', '2 Private Club'],
-    includes: index === 0 ? [
-      '3 Golf Rounds',
-      '4 nights in 4-star centrally located hotel',
-      'Daily breakfast included',
-      'Private transportation throughout your stay',
-      'Professional caddies-coaches at every round',
-      'Dedicated golf-loving host accompanying your group throughout the journey',
-      'Premium golf-ready welcome gift',
-      'Curated Bogotá nightlife and gastronomy concierge support'
-    ] : [
-      '4 Golf Rounds',
-      '5 nights in 4-star centrally located hotel',
-      'Daily breakfast included',
-      'Private transportation throughout your stay',
-      'Professional caddies-coaches at every round',
-      'Dedicated golf-loving host accompanying your group throughout the journey',
-      'Premium golf-ready welcome gift',
-      'Curated Bogotá nightlife and gastronomy concierge support'
-    ],
-  }));
+  const mappedPlans = Array.isArray(plans)
+    ? plans.map((plan, index) => ({
+        ...plan,
+        subtitle: index === 0 ? '3 Golf Rounds' : '4 Golf Rounds',
+        duration: index === 0 ? '4 Days / 3 Nights' : '5 Days / 4 Nights',
+        price: `$${Number(plan.basePrice ?? 0).toLocaleString('en-US')}`,
+        description: plan.description,
+        popular: index === 0,
+        popularLabel: index === 0 ? 'Smart Value' : 'Premium',
+        image: index === 0 ? bgxSmartPackImage : bgxElitePackImage,
+        idealFor: index === 0
+          ? 'Buddy groups looking for authentic golf + culture in Bogotá.'
+          : 'Golf travelers who want more holes, more stories, and a deeper connection to the city.',
+        courses: index === 0 ? ['2 Standard Golf Club', '1 Private Club'] : ['2 Standard Golf Club', '2 Private Club'],
+        includes: index === 0 ? [
+          '3 Golf Rounds',
+          '4 nights in 4-star centrally located hotel',
+          'Daily breakfast included',
+          'Private transportation throughout your stay',
+          'Professional caddies-coaches at every round',
+          'Dedicated golf-loving host accompanying your group throughout the journey',
+          'Premium golf-ready welcome gift',
+          'Curated Bogotá nightlife and gastronomy concierge support'
+        ] : [
+          '4 Golf Rounds',
+          '5 nights in 4-star centrally located hotel',
+          'Daily breakfast included',
+          'Private transportation throughout your stay',
+          'Professional caddies-coaches at every round',
+          'Dedicated golf-loving host accompanying your group throughout the journey',
+          'Premium golf-ready welcome gift',
+          'Curated Bogotá nightlife and gastronomy concierge support'
+        ],
+      }))
+    : [];
 
   return (
     <>

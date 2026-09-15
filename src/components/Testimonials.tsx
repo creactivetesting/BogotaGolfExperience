@@ -65,6 +65,7 @@ export function Testimonials() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>(fallbackTestimonials);
   const [mounted, setMounted] = useState(false);
   const sliderRef = useRef<Slider>(null);
+  const safeTestimonials = Array.isArray(testimonials) ? testimonials : fallbackTestimonials;
 
   const settings = {
     dots: true,
@@ -189,7 +190,7 @@ export function Testimonials() {
 
         <div className="-mx-4 pb-12">
           <Slider ref={sliderRef} {...settings}>
-            {testimonials.map((testimonial) => (
+            {safeTestimonials.map((testimonial) => (
               <div key={testimonial.id} className="px-4 h-full">
                 <div className="bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 h-[420px] flex flex-col relative group hover:border-[#d4af37]/50 hover:bg-white/[0.06] transition-all duration-500">
                   <div className="absolute top-6 right-6 opacity-20 group-hover:opacity-100 transition-opacity duration-500">

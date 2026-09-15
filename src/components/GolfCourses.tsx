@@ -215,6 +215,9 @@ export function GolfCourses() {
       ? courses
           .map((dbCourse) => {
             const staticCourse = courseCards.find((course) => course.name === dbCourse.name) ?? null;
+            const dbFeatures = Array.isArray(dbCourse.features) ? dbCourse.features : [];
+            const dbImages = Array.isArray(dbCourse.images) ? dbCourse.images : [];
+            const descriptionText = typeof dbCourse.description === 'string' ? dbCourse.description.trim() : '';
 
             if (!staticCourse) {
               return {
@@ -222,10 +225,10 @@ export function GolfCourses() {
                 type: 'Featured',
                 holes: 18,
                 difficulty: 'Custom',
-                features: dbCourse.features && dbCourse.features.length > 0 ? dbCourse.features : ['Featured Course'],
-                rating: 4.7,
-                image: dbCourse.images && dbCourse.images.length > 0 ? dbCourse.images[0] : 'https://images.unsplash.com/photo-1685296982506-91e3e7942a26?auto=format&fit=crop&w=1200&q=80',
-                images: dbCourse.images && dbCourse.images.length > 0 ? dbCourse.images : ['https://images.unsplash.com/photo-1685296982506-91e3e7942a26?auto=format&fit=crop&w=1200&q=80'],
+                features: dbFeatures.length > 0 ? dbFeatures : ['Featured Course'],
+                rating: typeof dbCourse.rating === 'number' ? dbCourse.rating : 4.7,
+                image: dbImages.length > 0 ? dbImages[0] : 'https://images.unsplash.com/photo-1685296982506-91e3e7942a26?auto=format&fit=crop&w=1200&q=80',
+                images: dbImages.length > 0 ? dbImages : ['https://images.unsplash.com/photo-1685296982506-91e3e7942a26?auto=format&fit=crop&w=1200&q=80'],
                 location: 'Bogotá, Colombia',
                 established: 'Custom',
                 yardage: 'Custom',
@@ -233,14 +236,14 @@ export function GolfCourses() {
                 services: ['Private Experience'],
                 hours: 'Flexible',
                 greenFee: 'On request',
-                detailedDescription: dbCourse.description && dbCourse.description.trim().length > 0 ? dbCourse.description : 'Featured golf experience selected by BGX.',
-                highlights: dbCourse.features && dbCourse.features.length > 0 ? dbCourse.features : ['Selected by BGX'],
+                detailedDescription: descriptionText.length > 0 ? descriptionText : 'Featured golf experience selected by BGX.',
+                highlights: dbFeatures.length > 0 ? dbFeatures : ['Selected by BGX'],
               };
             }
 
-            const mergedImages = dbCourse.images && dbCourse.images.length > 0 ? dbCourse.images : staticCourse.images;
-            const mergedFeatures = dbCourse.features && dbCourse.features.length > 0 ? dbCourse.features : staticCourse.features;
-            const mergedDescription = dbCourse.description && dbCourse.description.trim().length > 0 ? dbCourse.description : staticCourse.description;
+            const mergedImages = dbImages.length > 0 ? dbImages : staticCourse.images;
+            const mergedFeatures = dbFeatures.length > 0 ? dbFeatures : staticCourse.features;
+            const mergedDescription = descriptionText.length > 0 ? descriptionText : staticCourse.description;
             const mergedRating = typeof dbCourse.rating === 'number' ? dbCourse.rating : staticCourse.rating;
 
             return {
