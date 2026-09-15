@@ -53,9 +53,14 @@ export function GolfPlans() {
 
   useEffect(() => {
     async function loadPlans() {
-      const response = await fetch('/api/public/plans', { cache: 'no-store' });
-      const data = await response.json();
-      setPlans(data);
+      try {
+        const response = await fetch('/api/public/plans', { cache: 'no-store' });
+        const data = await response.json();
+        setPlans(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('No se pudieron cargar los planes:', error);
+        setPlans([]);
+      }
     }
 
     void loadPlans();
