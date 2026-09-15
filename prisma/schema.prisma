@@ -49,6 +49,9 @@ model Testimonial {
 model GolfCourse {
   id           String   @id @default(cuid())
   name         String
+  description  String?  @default("")
+  features     String[] @default([])
+  images       String[] @default([])
   isAvailable  Boolean  @default(true)
   homeFeatured Boolean  @default(false)
   createdAt    DateTime @default(now())

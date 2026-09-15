@@ -36,6 +36,9 @@ type Plan = {
 type GolfCourse = {
   id: string;
   name: string;
+  description: string | null;
+  features: string[];
+  images: string[];
   isAvailable: boolean;
   homeFeatured: boolean;
   createdAt: string;
@@ -277,6 +280,17 @@ export default function AdminPage() {
   const [isUpdatingAmbassadorCommissionId, setIsUpdatingAmbassadorCommissionId] = useState<string | null>(null);
   const [isUpdatingCourseId, setIsUpdatingCourseId] = useState<string | null>(null);
   const [isUpdatingHomeFeaturedCourseId, setIsUpdatingHomeFeaturedCourseId] = useState<string | null>(null);
+  const [selectedCourseEditorId, setSelectedCourseEditorId] = useState<string | null>(null);
+  const [courseEditorDescription, setCourseEditorDescription] = useState('');
+  const [courseEditorFeatures, setCourseEditorFeatures] = useState('');
+  const [courseEditorImages, setCourseEditorImages] = useState('');
+  const [courseImageInput, setCourseImageInput] = useState('');
+  const [isDraggingCourseImage, setIsDraggingCourseImage] = useState(false);
+  const [isProcessingCourseImage, setIsProcessingCourseImage] = useState(false);
+  const [newCourseName, setNewCourseName] = useState('');
+  const [isCreatingCourse, setIsCreatingCourse] = useState(false);
+  const [isRemovingCourseId, setIsRemovingCourseId] = useState<string | null>(null);
+  const [isSavingCourseContent, setIsSavingCourseContent] = useState(false);
   const [isGeneratingQuotePdf, setIsGeneratingQuotePdf] = useState(false);
   const [isUpdatingQuoteStatusId, setIsUpdatingQuoteStatusId] = useState<string | null>(null);
   const [generalAmbassadorStats, setGeneralAmbassadorStats] = useState<Array<{ ambassadorId: string; ambassadorName: string; ambassadorCode: string; totalClicks: number; topUrl: string | null; lastClickedAt: string | null }>>([]);
@@ -519,6 +533,41 @@ export default function AdminPage() {
     }
   }
 
+  async function handleCourseImageFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setMessage('Sube una imagen válida (JPG, PNG, WEBP, etc.).');
+      return;
+    }
+
+    if (file.size > MAX_BLOG_COVER_IMAGE_SIZE_BYTES) {
+      setMessage('La imagen es demasiado grande. Usa un archivo de hasta 2 MB.');
+      return;
+    }
+
+    setIsProcessingCourseImage(true);
+    setMessage('');
+
+    try {
+      const dataUrl = await convertFileToDataUrl(file);
+      const existingImages = courseEditorImages
+        .split(/\n|,/) 
+        .map((image) => image.trim())
+        .filter(Boolean);
+
+      if (existingImages.includes(dataUrl)) {
+        return;
+      }
+
+      const nextImages = [...existingImages, dataUrl].join('\n');
+      setCourseEditorImages(nextImages);
+    } catch (error) {
+      console.error('Error processing course image:', error);
+      setMessage(error instanceof Error ? error.message : 'No se pudo procesar la imagen del campo.');
+    } finally {
+      setIsProcessingCourseImage(false);
+    }
+  }
+
   async function handleBlogCoverImageInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
@@ -539,6 +588,28 @@ export default function AdminPage() {
     }
 
     await handleBlogCoverImageFile(file);
+  }
+
+  async function handleCourseImageInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    await handleCourseImageFile(file);
+    event.target.value = '';
+  }
+
+  async function handleCourseImageDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingCourseImage(false);
+
+    const file = event.dataTransfer.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    await handleCourseImageFile(file);
   }
 
   function clearBlogCoverImage() {
@@ -928,6 +999,206 @@ export default function AdminPage() {
       setMessage(error instanceof Error ? error.message : 'No se pudo actualizar el campo destacado.');
     } finally {
       setIsUpdatingHomeFeaturedCourseId(null);
+    }
+  }
+
+  function openCourseEditor(course: GolfCourse) {
+    setSelectedCourseEditorId(course.id);
+    setCourseEditorDescription(course.description ?? '');
+    setCourseEditorFeatures((course.features ?? []).join(', '));
+    setCourseEditorImages((course.images ?? []).join('\n'));
+    setCourseImageInput('');
+  }
+
+  function addCourseImageUrl() {
+    const sanitized = courseImageInput.trim();
+    if (!sanitized) {
+      return;
+    }
+
+    const existingImages = courseEditorImages
+      .split(/\n|,/) 
+      .map((image) => image.trim())
+      .filter(Boolean);
+
+    if (existingImages.includes(sanitized)) {
+      setCourseImageInput('');
+      return;
+    }
+
+    const nextImages = [...existingImages, sanitized].join('\n');
+    setCourseEditorImages(nextImages);
+    setCourseImageInput('');
+  }
+
+  function removeCourseImageUrl(urlToRemove: string) {
+    const nextImages = courseEditorImages
+      .split(/\n|,/) 
+      .map((image) => image.trim())
+      .filter(Boolean)
+      .filter((image) => image !== urlToRemove)
+      .join('\n');
+
+    setCourseEditorImages(nextImages);
+  }
+
+  function moveCourseImageToPrimary(urlToPromote: string) {
+    const nextImages = courseEditorImages
+      .split(/\n|,/) 
+      .map((image) => image.trim())
+      .filter(Boolean)
+      .filter((image) => image !== urlToPromote);
+
+    setCourseEditorImages([urlToPromote, ...nextImages].join('\n'));
+  }
+
+  async function handleCreateCourse() {
+    const normalizedName = newCourseName.trim();
+    if (!normalizedName) {
+      setMessage('Debes ingresar el nombre del campo.');
+      return;
+    }
+
+    setIsCreatingCourse(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/admin/courses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: normalizedName,
+          description: '',
+          features: [],
+          images: [],
+          isAvailable: true,
+          homeFeatured: false,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'No se pudo crear el campo.');
+      }
+
+      setCourses((current) => [...current, data]);
+      setNewCourseName('');
+      setMessage(`Campo ${normalizedName} creado correctamente.`);
+    } catch (error) {
+      console.error('Error creando campo:', error);
+      setMessage(error instanceof Error ? error.message : 'No se pudo crear el campo.');
+    } finally {
+      setIsCreatingCourse(false);
+    }
+  }
+
+  async function handleRemoveCourse(courseId: string) {
+    const course = courses.find((item) => item.id === courseId);
+    if (!course) {
+      return;
+    }
+
+    const confirmed = window.confirm(`¿Quieres ocultar el campo ${course.name}? Se mantendrá guardado en la base de datos.`);
+    if (!confirmed) {
+      return;
+    }
+
+    setIsRemovingCourseId(courseId);
+    setMessage('');
+
+    try {
+      const response = await fetch(`/api/admin/courses?id=${encodeURIComponent(courseId)}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'No se pudo eliminar el campo.');
+      }
+
+      setCourses((current) =>
+        current.map((item) =>
+          item.id === courseId
+            ? {
+                ...item,
+                isAvailable: false,
+                homeFeatured: false,
+              }
+            : item,
+        ),
+      );
+      setMessage(`Campo ${course.name} ocultado correctamente.`);
+    } catch (error) {
+      console.error('Error ocultando campo:', error);
+      setMessage(error instanceof Error ? error.message : 'No se pudo ocultar el campo.');
+    } finally {
+      setIsRemovingCourseId(null);
+    }
+  }
+
+  async function handleSaveCourseContent() {
+    if (!selectedCourseEditorId) {
+      return;
+    }
+
+    const course = courses.find((item) => item.id === selectedCourseEditorId);
+    if (!course) {
+      return;
+    }
+
+    setIsSavingCourseContent(true);
+    setMessage('');
+
+    try {
+      const features = courseEditorFeatures
+        .split(/[,\n]/)
+        .map((feature) => feature.trim())
+        .filter(Boolean);
+
+      const images = courseEditorImages
+        .split(/\n|,/)
+        .map((image) => image.trim())
+        .filter(Boolean);
+
+      const response = await fetch('/api/admin/courses', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: selectedCourseEditorId,
+          description: courseEditorDescription.trim(),
+          features,
+          images,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'No se pudo guardar la información del campo.');
+      }
+
+      setCourses((current) =>
+        current.map((item) =>
+          item.id === selectedCourseEditorId
+            ? {
+                ...item,
+                description: data.description ?? courseEditorDescription.trim(),
+                features: Array.isArray(data.features) ? data.features : features,
+                images: Array.isArray(data.images) ? data.images : images,
+              }
+            : item,
+        ),
+      );
+
+      setMessage(`Información del campo ${course.name} actualizada correctamente.`);
+    } catch (error) {
+      console.error('Error guardando contenido del campo:', error);
+      setMessage(error instanceof Error ? error.message : 'No se pudo guardar la información del campo.');
+    } finally {
+      setIsSavingCourseContent(false);
     }
   }
 
@@ -1399,16 +1670,9 @@ export default function AdminPage() {
   const selectedAmbassadorCommissionRate = selectedAmbassador?.commissionRate ?? 0;
   const commission = selectedAmbassador ? subtotal * (selectedAmbassadorCommissionRate / 100) : 0;
   const netMargin = subtotal - commission;
-  const homeFeaturedCourses = [...courses].sort((firstCourse, secondCourse) => {
-    if (firstCourse.homeFeatured === secondCourse.homeFeatured) {
-      return firstCourse.name.localeCompare(secondCourse.name);
-    }
-
-    return Number(secondCourse.homeFeatured) - Number(firstCourse.homeFeatured);
-  });
+  const allCoursesList = [...courses].sort((firstCourse, secondCourse) => firstCourse.name.localeCompare(secondCourse.name));
   const homeFeaturedCount = courses.filter((course) => course.homeFeatured).length;
   const canSelectMoreHomeFeatured = homeFeaturedCount < 6;
-  const coursesPageOnlyCourses = courses.filter((course) => !course.homeFeatured);
   const selectedQuoteCourses = courses.filter((course) => selectedQuoteCourseIds.includes(course.id));
   const quotePackageTemplate = getQuotePackageTemplate(quotePlan?.name);
   const leadSourceOptions = Array.from(new Set((customerLeads.map((lead) => lead.source).filter(Boolean)) as string[]));
@@ -1817,92 +2081,242 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-              <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-                <h3 className="text-base font-semibold text-zinc-900">Campos del Home (destacados)</h3>
-                <p className="mt-1 text-xs text-zinc-500">
-                  Elige hasta 6 campos para destacar en la sección principal del Home.
-                </p>
-                <p className="mt-1 text-xs text-zinc-500">
-                  Seleccionados: {homeFeaturedCount} de 6
-                </p>
-                <div className="mt-3 max-h-[520px] space-y-3 overflow-y-auto pr-1">
-                  {homeFeaturedCourses.map((course) => (
-                    <label
-                      key={course.id}
-                      htmlFor={`course-${course.id}`}
-                      className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3"
-                    >
-                      <div>
-                        <p className="font-medium text-zinc-900">{course.name}</p>
-                        <p className="text-xs text-zinc-500">
-                          Disponible: {course.isAvailable ? 'Sí' : 'No'}
-                        </p>
-                        <p className="text-xs text-zinc-500">
-                          Home: {course.homeFeatured ? 'Destacado' : 'No destacado'}
-                        </p>
-                      </div>
+            <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-900">Campos y visibilidad</h3>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Elige qué campos aparecen en Home y cuáles se activan en la página de Courses.
+                  </p>
+                </div>
+                <p className="text-xs text-zinc-500">Seleccionados en Home: {homeFeaturedCount} de 6</p>
+              </div>
 
-                      <div className="flex items-center gap-3">
-                        {isUpdatingHomeFeaturedCourseId === course.id ? (
-                          <span className="text-xs text-zinc-500">Guardando...</span>
-                        ) : null}
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+                <input
+                  value={newCourseName}
+                  onChange={(event) => setNewCourseName(event.target.value)}
+                  placeholder="Nombre del nuevo campo"
+                  className="flex-1 rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleCreateCourse()}
+                  disabled={isCreatingCourse}
+                  className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isCreatingCourse ? 'Creando...' : 'Añadir campo'}
+                </button>
+              </div>
+
+              {!canSelectMoreHomeFeatured ? (
+                <p className="mb-3 px-1 text-xs text-amber-700">
+                  Ya seleccionaste 6 destacados. Desmarca uno para elegir otro.
+                </p>
+              ) : null}
+
+              <div className="max-h-[620px] space-y-3 overflow-y-auto pr-1">
+                {allCoursesList.map((course) => (
+                  <div
+                    key={course.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium text-zinc-900">{course.name}</p>
+                      <p className="text-xs text-zinc-500">
+                        Estado: {course.isAvailable ? 'Visible en Courses' : 'Oculto en Courses'}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                      {isUpdatingHomeFeaturedCourseId === course.id || isUpdatingCourseId === course.id || isRemovingCourseId === course.id ? (
+                        <span className="text-xs text-zinc-500">Guardando...</span>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() => openCourseEditor(course)}
+                        className="rounded-full border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold tracking-[0.02em] text-zinc-700 transition hover:bg-zinc-100"
+                      >
+                        Editar
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void handleRemoveCourse(course.id)}
+                        className="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-semibold tracking-[0.02em] text-red-700 transition hover:bg-red-100"
+                      >
+                        Eliminar
+                      </button>
+
+                      <label className="flex items-center gap-2 text-[11px] font-medium text-zinc-700">
                         <input
-                          id={`course-${course.id}`}
                           type="checkbox"
                           checked={course.homeFeatured}
                           disabled={isUpdatingHomeFeaturedCourseId === course.id || (!course.homeFeatured && !canSelectMoreHomeFeatured)}
                           onChange={(event) => void handleToggleHomeFeatured(course.id, event.target.checked)}
-                          className="h-5 w-5 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-700"
+                          className="h-4 w-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-700"
                         />
-                      </div>
-                    </label>
-                  ))}
-                  {!canSelectMoreHomeFeatured ? (
-                    <p className="px-1 text-xs text-amber-700">
-                      Ya seleccionaste 6 destacados. Desmarca uno para elegir otro.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
+                        Destacado Home
+                      </label>
 
-              <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-                <h3 className="text-base font-semibold text-zinc-900">Campos exclusivos de la página Courses</h3>
-                <p className="mt-1 text-xs text-zinc-500">
-                  Catálogo extendido que se muestra en la página de Courses.
-                </p>
-                <div className="mt-3 max-h-[520px] space-y-3 overflow-y-auto pr-1">
-                  {coursesPageOnlyCourses.map((course) => (
-                    <label
-                      key={course.id}
-                      htmlFor={`course-${course.id}`}
-                      className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3"
-                    >
-                      <div>
-                        <p className="font-medium text-zinc-900">{course.name}</p>
-                        <p className="text-xs text-zinc-500">
-                          Disponible: {course.isAvailable ? 'Sí' : 'No'}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        {isUpdatingCourseId === course.id ? (
-                          <span className="text-xs text-zinc-500">Guardando...</span>
-                        ) : null}
+                      <label className="flex items-center gap-2 text-[11px] font-medium text-zinc-700">
                         <input
-                          id={`course-${course.id}`}
                           type="checkbox"
                           checked={course.isAvailable}
                           disabled={isUpdatingCourseId === course.id}
                           onChange={(event) => void handleToggleCourse(course.id, event.target.checked)}
-                          className="h-5 w-5 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-700"
+                          className="h-4 w-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-700"
                         />
-                      </div>
-                    </label>
-                  ))}
-                </div>
+                        En Courses
+                      </label>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {selectedCourseEditorId ? (
+              <div className="fixed inset-0 z-50 flex items-start justify-center bg-zinc-950/40 p-4 pt-16 backdrop-blur-sm">
+                <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-5 shadow-2xl shadow-zinc-900/25">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-zinc-900">Editar contenido del campo</h3>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {courses.find((course) => course.id === selectedCourseEditorId)?.name ?? 'Campo'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCourseEditorId(null)}
+                      className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+
+                  <div className="grid gap-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-zinc-700">Descripción</label>
+                      <textarea
+                        value={courseEditorDescription}
+                        onChange={(event) => setCourseEditorDescription(event.target.value)}
+                        rows={5}
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-zinc-700">Características</label>
+                      <textarea
+                        value={courseEditorFeatures}
+                        onChange={(event) => setCourseEditorFeatures(event.target.value)}
+                        rows={3}
+                        placeholder="Ej: Historic club, Walking friendly, Scottish design"
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-zinc-700">Fotos del campo</label>
+
+                      <div
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          setIsDraggingCourseImage(true);
+                        }}
+                        onDragLeave={() => setIsDraggingCourseImage(false)}
+                        onDrop={(event) => void handleCourseImageDrop(event)}
+                        className={`mb-3 rounded-2xl border border-dashed p-3 transition ${
+                          isDraggingCourseImage
+                            ? 'border-emerald-500 bg-emerald-50'
+                            : 'border-zinc-300 bg-zinc-50'
+                        }`}
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(event) => void handleCourseImageInputChange(event)}
+                            className="hidden"
+                            id="course-image-upload"
+                          />
+                          <label
+                            htmlFor="course-image-upload"
+                            className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                          >
+                            {isProcessingCourseImage ? 'Procesando...' : 'Subir foto'}
+                          </label>
+
+                          <div className="flex flex-1 gap-2">
+                            <input
+                              value={courseImageInput}
+                              onChange={(event) => setCourseImageInput(event.target.value)}
+                              placeholder="Pega una URL de imagen"
+                              className="flex-1 rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={addCourseImageUrl}
+                              className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                            >
+                              Añadir
+                            </button>
+                          </div>
+                        </div>
+                        <p className="mt-2 text-[11px] text-zinc-500">
+                          Arrastra y suelta una imagen aquí o sube un archivo desde tu equipo.
+                        </p>
+                      </div>
+
+                      {courseEditorImages ? (
+                        <div className="space-y-2">
+                          {courseEditorImages
+                            .split(/\n|,/) 
+                            .map((image) => image.trim())
+                            .filter(Boolean)
+                            .map((image, index) => (
+                              <div
+                                key={`${image}-${index}`}
+                                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2"
+                              >
+                                <span className="max-w-[70%] truncate text-xs text-zinc-700">{image}</span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => moveCourseImageToPrimary(image)}
+                                    className="rounded-full border border-zinc-300 px-2 py-1 text-[10px] font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                                  >
+                                    Principal
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCourseImageUrl(image)}
+                                    className="rounded-full border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition hover:bg-red-100"
+                                  >
+                                    Quitar
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-zinc-500">Todavía no hay fotos guardadas para este campo.</p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveCourseContent()}
+                      disabled={isSavingCourseContent}
+                      className="w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isSavingCourseContent ? 'Guardando...' : 'Guardar contenido del campo'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </section>
         ) : null}
 

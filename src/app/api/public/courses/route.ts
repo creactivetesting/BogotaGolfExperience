@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const featuredOnly = searchParams.get('featured') === 'true';
+
     const courses = await prisma.golfCourse.findMany({
-      where: { isAvailable: true },
+      where: {
+        ...(featuredOnly
+          ? { homeFeatured: true }
+          : { isAvailable: true, homeFeatured: false }),
+      },
       orderBy: { createdAt: 'asc' },
     });
 

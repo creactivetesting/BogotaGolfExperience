@@ -39,7 +39,11 @@ import lagartosImg3 from "figma:asset/ceb7903636a8a14ccb1e6855d631683cfbbddd64.p
 type PublicCourse = {
   id: string;
   name: string;
+  description: string | null;
+  features: string[];
+  images: string[];
   isAvailable: boolean;
+  homeFeatured: boolean;
   createdAt: string;
 };
 
@@ -74,9 +78,9 @@ export function GolfCourses() {
 
   useEffect(() => {
     async function loadCourses() {
-      const response = await fetch('/api/public/courses');
+      const response = await fetch('/api/public/courses?featured=true');
       const data = await response.json();
-      setCourses(data);
+      setCourses(Array.isArray(data) ? data : []);
     }
 
     void loadCourses();
@@ -205,7 +209,48 @@ export function GolfCourses() {
     }
   ];
 
-  const availableCourses = courses.length > 0 ? courseCards.filter((course) => courses.some((dbCourse) => dbCourse.name === course.name && dbCourse.isAvailable)) : courseCards;
+  const featuredCourses =
+    courses.length > 0
+      ? courses
+          .map((dbCourse) => {
+            const staticCourse = courseCards.find((course) => course.name === dbCourse.name) ?? null;
+
+            if (!staticCourse) {
+              return {
+                ...dbCourse,
+                type: 'Featured',
+                holes: 18,
+                difficulty: 'Custom',
+                features: dbCourse.features && dbCourse.features.length > 0 ? dbCourse.features : ['Featured Course'],
+                rating: 4.7,
+                image: dbCourse.images && dbCourse.images.length > 0 ? dbCourse.images[0] : 'https://images.unsplash.com/photo-1685296982506-91e3e7942a26?auto=format&fit=crop&w=1200&q=80',
+                images: dbCourse.images && dbCourse.images.length > 0 ? dbCourse.images : ['https://images.unsplash.com/photo-1685296982506-91e3e7942a26?auto=format&fit=crop&w=1200&q=80'],
+                location: 'Bogotá, Colombia',
+                established: 'Custom',
+                yardage: 'Custom',
+                par: 'Par 72',
+                services: ['Private Experience'],
+                hours: 'Flexible',
+                greenFee: 'On request',
+                detailedDescription: dbCourse.description && dbCourse.description.trim().length > 0 ? dbCourse.description : 'Featured golf experience selected by BGX.',
+                highlights: dbCourse.features && dbCourse.features.length > 0 ? dbCourse.features : ['Selected by BGX'],
+              };
+            }
+
+            const mergedImages = dbCourse.images && dbCourse.images.length > 0 ? dbCourse.images : staticCourse.images;
+            const mergedFeatures = dbCourse.features && dbCourse.features.length > 0 ? dbCourse.features : staticCourse.features;
+            const mergedDescription = dbCourse.description && dbCourse.description.trim().length > 0 ? dbCourse.description : staticCourse.description;
+
+            return {
+              ...staticCourse,
+              ...dbCourse,
+              description: mergedDescription,
+              features: mergedFeatures,
+              image: mergedImages[0] ?? staticCourse.image,
+              images: mergedImages,
+            };
+          })
+      : courseCards.slice(0, 6);
 
   return (
     <section id="courses" className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-primary/5 via-background to-accent/5 golf-ball-texture relative overflow-hidden">
@@ -227,7 +272,7 @@ export function GolfCourses() {
         </div>
 
         <div className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none pb-8 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-          {availableCourses.map((course, index) => (
+          {featuredCourses.map((course, index) => (
             <div key={index} className="min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center md:snap-align-none h-full">
               <Card className="h-full overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col group border-2 border-transparent hover:border-accent/30">
                 <div className="relative h-48 overflow-hidden">
@@ -311,20 +356,20 @@ export function GolfCourses() {
                 {/* Mobile Full Width Image / Desktop Normal Image */}
                 <div className="relative w-full h-64 sm:h-72 lg:h-80 group">
                    <ImageWithFallback
-                      src={availableCourses[selectedCourse].images ? availableCourses[selectedCourse].images[currentImageIndex] : availableCourses[selectedCourse].image}
-                      alt={availableCourses[selectedCourse].name}
+                      src={featuredCourses[selectedCourse].images ? featuredCourses[selectedCourse].images[currentImageIndex] : featuredCourses[selectedCourse].image}
+                      alt={featuredCourses[selectedCourse].name}
                     />
                     
                     {/* Image overlay gradient for text legibility if needed */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent sm:hidden"></div>
 
                     {/* Navigation Arrows */}
-                    {availableCourses[selectedCourse].images && availableCourses[selectedCourse].images.length > 1 && (
+                    {featuredCourses[selectedCourse].images && featuredCourses[selectedCourse].images.length > 1 && (
                       <>
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            setCurrentImageIndex((prev) => (prev === 0 ? availableCourses[selectedCourse].images.length - 1 : prev - 1));
+                            setCurrentImageIndex((prev) => (prev === 0 ? featuredCourses[selectedCourse].images.length - 1 : prev - 1));
                           }}
                           className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-md text-white p-2 rounded-full hover:bg-black/50 transition-all active:scale-95"
                         >
@@ -333,7 +378,7 @@ export function GolfCourses() {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            setCurrentImageIndex((prev) => (prev + 1) % availableCourses[selectedCourse].images.length);
+                            setCurrentImageIndex((prev) => (prev + 1) % featuredCourses[selectedCourse].images.length);
                           }}
                           className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-md text-white p-2 rounded-full hover:bg-black/50 transition-all active:scale-95"
                         >
@@ -345,11 +390,11 @@ export function GolfCourses() {
                     {/* Badges overlaid on image for Mobile (Space saving) */}
                     <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end sm:hidden z-10">
                        <Badge variant="secondary" className="bg-white/90 text-black backdrop-blur-md shadow-lg border-0">
-                          {availableCourses[selectedCourse].type}
+                          {featuredCourses[selectedCourse].type}
                         </Badge>
                         <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow-lg">
                           <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
-                          <span className="text-xs font-bold">{availableCourses[selectedCourse].rating}</span>
+                          <span className="text-xs font-bold">{featuredCourses[selectedCourse].rating}</span>
                         </div>
                     </div>
                 </div>
@@ -359,18 +404,18 @@ export function GolfCourses() {
                   
                   <DialogHeader className="p-0 space-y-2 text-left">
                     <DialogTitle className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary leading-tight">
-                      {availableCourses[selectedCourse].name}
+                      {featuredCourses[selectedCourse].name}
                     </DialogTitle>
                     <DialogDescription className="text-sm sm:text-base flex items-center text-muted-foreground">
                       <MapPin className="w-4 h-4 mr-1 inline-block" />
-                      {availableCourses[selectedCourse].location}
+                      {featuredCourses[selectedCourse].location}
                     </DialogDescription>
                   </DialogHeader>
 
                   {/* Thumbnails (Desktop Only) */}
-                  {availableCourses[selectedCourse].images && availableCourses[selectedCourse].images.length > 1 && (
+                  {featuredCourses[selectedCourse].images && featuredCourses[selectedCourse].images.length > 1 && (
                     <div className="hidden sm:flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                      {availableCourses[selectedCourse].images.map((img: any, idx: number) => (
+                      {featuredCourses[selectedCourse].images.map((img: any, idx: number) => (
                         <button
                           key={idx}
                           onClick={() => setCurrentImageIndex(idx)}
@@ -391,22 +436,22 @@ export function GolfCourses() {
                      <div className="bg-primary/5 p-3 rounded-xl border border-primary/10 text-center">
                         <Trophy className="w-5 h-5 mx-auto text-primary mb-1" />
                         <div className="text-xs text-muted-foreground uppercase tracking-wider">Difficulty</div>
-                        <div className="font-semibold text-sm truncate">{availableCourses[selectedCourse].difficulty}</div>
+                        <div className="font-semibold text-sm truncate">{featuredCourses[selectedCourse].difficulty}</div>
                      </div>
                      <div className="bg-primary/5 p-3 rounded-xl border border-primary/10 text-center">
                         <MapPin className="w-5 h-5 mx-auto text-primary mb-1" />
                         <div className="text-xs text-muted-foreground uppercase tracking-wider">Holes</div>
-                        <div className="font-semibold text-sm">{availableCourses[selectedCourse].holes}</div>
+                        <div className="font-semibold text-sm">{featuredCourses[selectedCourse].holes}</div>
                      </div>
                      <div className="bg-primary/5 p-3 rounded-xl border border-primary/10 text-center">
                         <Clock className="w-5 h-5 mx-auto text-primary mb-1" />
                         <div className="text-xs text-muted-foreground uppercase tracking-wider">Par</div>
-                        <div className="font-semibold text-sm">{availableCourses[selectedCourse].par}</div>
+                        <div className="font-semibold text-sm">{featuredCourses[selectedCourse].par}</div>
                      </div>
                      <div className="bg-primary/5 p-3 rounded-xl border border-primary/10 text-center">
                         <Calendar className="w-5 h-5 mx-auto text-primary mb-1" />
                         <div className="text-xs text-muted-foreground uppercase tracking-wider">Est.</div>
-                        <div className="font-semibold text-sm">{availableCourses[selectedCourse].established}</div>
+                        <div className="font-semibold text-sm">{featuredCourses[selectedCourse].established}</div>
                      </div>
                   </div>
 
@@ -417,13 +462,13 @@ export function GolfCourses() {
                           About the Course
                         </h3>
                         <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                          {availableCourses[selectedCourse].detailedDescription}
+                          {featuredCourses[selectedCourse].detailedDescription}
                         </p>
                         
                         <div className="pt-2">
                            <h4 className="text-sm font-semibold mb-3 uppercase tracking-wider text-primary">Key Features</h4>
                            <div className="flex flex-wrap gap-2">
-                              {availableCourses[selectedCourse].features.map((feature, idx) => (
+                              {featuredCourses[selectedCourse].features.map((feature, idx) => (
                                 <Badge key={idx} variant="outline" className="px-3 py-1 bg-background text-xs sm:text-sm">
                                   {feature}
                                 </Badge>
@@ -440,7 +485,7 @@ export function GolfCourses() {
                              Course Highlights
                            </h4>
                            <ul className="space-y-3">
-                              {availableCourses[selectedCourse].highlights.map((highlight, idx) => (
+                              {featuredCourses[selectedCourse].highlights.map((highlight, idx) => (
                                 <li key={idx} className="flex items-start text-sm">
                                   <ArrowRight className="w-4 h-4 text-accent mr-2 mt-0.5 flex-shrink-0" />
                                   <span>{highlight}</span>
@@ -452,7 +497,7 @@ export function GolfCourses() {
                         <div>
                            <h4 className="font-semibold mb-3 text-foreground">Available Services</h4>
                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {availableCourses[selectedCourse].services.map((service, idx) => (
+                              {featuredCourses[selectedCourse].services.map((service, idx) => (
                                 <div key={idx} className="flex items-center text-sm text-muted-foreground">
                                   <div className="w-1.5 h-1.5 bg-primary/50 rounded-full mr-2"></div>
                                   {service}
@@ -471,14 +516,14 @@ export function GolfCourses() {
                   <Button 
                     variant="outline" 
                     className="w-full sm:w-1/2 border-primary/20 hover:bg-primary/5 hover:text-primary h-12 text-base"
-                    onClick={() => handleWhatsAppClick(availableCourses[selectedCourse].name)}
+                    onClick={() => handleWhatsAppClick(featuredCourses[selectedCourse].name)}
                   >
                     <MessageCircle className="w-5 h-5 mr-2" />
                     Ask a Question
                   </Button>
                   <Button 
                     className="w-full sm:w-1/2 bg-primary hover:bg-primary/90 h-12 text-base shadow-lg shadow-primary/20"
-                    onClick={() => handleBookClick(availableCourses[selectedCourse])}
+                    onClick={() => handleBookClick(featuredCourses[selectedCourse])}
                   >
                     <DollarSign className="w-5 h-5 mr-2" />
                     Book This Course
