@@ -520,7 +520,7 @@ export function CoursesPage() {
           holes: 18,
           difficulty: 'Varied',
           features: course.features && course.features.length > 0 ? course.features : ['Golf experience', 'Bogotá'],
-          rating: 4.8,
+          rating: typeof course.rating === 'number' ? course.rating : 4.8,
           image:
             course.images && course.images.length > 0
               ? course.images[0]

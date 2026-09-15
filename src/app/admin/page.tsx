@@ -39,6 +39,7 @@ type GolfCourse = {
   description: string | null;
   features: string[];
   images: string[];
+  rating: number;
   isAvailable: boolean;
   homeFeatured: boolean;
   createdAt: string;
@@ -284,6 +285,7 @@ export default function AdminPage() {
   const [courseEditorDescription, setCourseEditorDescription] = useState('');
   const [courseEditorFeatures, setCourseEditorFeatures] = useState('');
   const [courseEditorImages, setCourseEditorImages] = useState('');
+  const [courseEditorRating, setCourseEditorRating] = useState('4.8');
   const [courseImageInput, setCourseImageInput] = useState('');
   const [isDraggingCourseImage, setIsDraggingCourseImage] = useState(false);
   const [isProcessingCourseImage, setIsProcessingCourseImage] = useState(false);
@@ -1011,6 +1013,7 @@ export default function AdminPage() {
     setCourseEditorDescription(course.description ?? '');
     setCourseEditorFeatures((course.features ?? []).join(', '));
     setCourseEditorImages((course.images ?? []).join('\n'));
+    setCourseEditorRating(String(course.rating ?? 4.8));
     setCourseImageInput('');
   }
 
@@ -1152,6 +1155,7 @@ export default function AdminPage() {
         .filter(Boolean);
 
       const images = parseCourseImageEntries(courseEditorImages);
+      const parsedRating = Number(courseEditorRating);
 
       const response = await fetch('/api/admin/courses', {
         method: 'PATCH',
@@ -1163,6 +1167,7 @@ export default function AdminPage() {
           description: courseEditorDescription.trim(),
           features,
           images,
+          rating: Number.isFinite(parsedRating) ? parsedRating : 4.8,
         }),
       });
 
@@ -1179,6 +1184,7 @@ export default function AdminPage() {
                 description: data.description ?? courseEditorDescription.trim(),
                 features: Array.isArray(data.features) ? data.features : features,
                 images: Array.isArray(data.images) ? data.images : images,
+                rating: typeof data.rating === 'number' ? data.rating : parsedRating,
               }
             : item,
         ),
@@ -2204,6 +2210,22 @@ export default function AdminPage() {
                         onChange={(event) => setCourseEditorFeatures(event.target.value)}
                         rows={3}
                         placeholder="Ej: Historic club, Walking friendly, Scottish design"
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="course-rating" className="mb-2 block text-sm font-medium text-zinc-700">
+                        Calificación
+                      </label>
+                      <input
+                        id="course-rating"
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        value={courseEditorRating}
+                        onChange={(event) => setCourseEditorRating(event.target.value)}
                         className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500"
                       />
                     </div>

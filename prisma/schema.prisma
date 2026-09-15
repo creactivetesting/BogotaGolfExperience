@@ -52,6 +52,7 @@ model GolfCourse {
   description  String?  @default("")
   features     String[] @default([])
   images       String[] @default([])
+  rating       Float    @default(4.8)
   isAvailable  Boolean  @default(true)
   homeFeatured Boolean  @default(false)
   createdAt    DateTime @default(now())

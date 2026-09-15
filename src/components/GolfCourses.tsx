@@ -42,6 +42,7 @@ type PublicCourse = {
   description: string | null;
   features: string[];
   images: string[];
+  rating: number;
   isAvailable: boolean;
   homeFeatured: boolean;
   createdAt: string;
@@ -240,12 +241,14 @@ export function GolfCourses() {
             const mergedImages = dbCourse.images && dbCourse.images.length > 0 ? dbCourse.images : staticCourse.images;
             const mergedFeatures = dbCourse.features && dbCourse.features.length > 0 ? dbCourse.features : staticCourse.features;
             const mergedDescription = dbCourse.description && dbCourse.description.trim().length > 0 ? dbCourse.description : staticCourse.description;
+            const mergedRating = typeof dbCourse.rating === 'number' ? dbCourse.rating : staticCourse.rating;
 
             return {
               ...staticCourse,
               ...dbCourse,
               description: mergedDescription,
               features: mergedFeatures,
+              rating: mergedRating,
               image: mergedImages[0] ?? staticCourse.image,
               images: mergedImages,
             };

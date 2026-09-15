@@ -58,11 +58,12 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, description, features, images, isAvailable, homeFeatured } = body as {
+    const { name, description, features, images, rating, isAvailable, homeFeatured } = body as {
       name?: string;
       description?: string | null;
       features?: string[];
       images?: string[];
+      rating?: number;
       isAvailable?: boolean;
       homeFeatured?: boolean;
     };
@@ -92,12 +93,15 @@ export async function POST(request: Request) {
       }
     }
 
+    const parsedRating = typeof rating === 'number' && Number.isFinite(rating) ? rating : 4.8;
+
     const created = await prisma.golfCourse.create({
       data: {
         name: normalizedName,
         description: typeof description === 'string' ? description : '',
         features: Array.isArray(features) ? features.map((feature) => String(feature).trim()).filter(Boolean) : [],
         images: Array.isArray(images) ? images.map((image) => String(image).trim()).filter(Boolean) : [],
+        rating: Math.min(5, Math.max(0, parsedRating)),
         isAvailable: typeof isAvailable === 'boolean' ? isAvailable : true,
         homeFeatured: typeof homeFeatured === 'boolean' ? homeFeatured : false,
       },
@@ -113,13 +117,14 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, isAvailable, homeFeatured, description, features, images } = body as {
+    const { id, isAvailable, homeFeatured, description, features, images, rating } = body as {
       id?: string;
       isAvailable?: boolean;
       homeFeatured?: boolean;
       description?: string | null;
       features?: string[];
       images?: string[];
+      rating?: number;
     };
 
     const hasFieldUpdates =
@@ -128,7 +133,8 @@ export async function PATCH(request: Request) {
       typeof description === 'string' ||
       description === null ||
       Array.isArray(features) ||
-      Array.isArray(images);
+      Array.isArray(images) ||
+      typeof rating === 'number';
 
     if (!id || !hasFieldUpdates) {
       return NextResponse.json({ error: 'Debes enviar un cambio válido para el campo.' }, { status: 400 });
@@ -159,6 +165,8 @@ export async function PATCH(request: Request) {
       ? images.map((image) => String(image).trim()).filter(Boolean)
       : undefined;
 
+    const normalizedRating = typeof rating === 'number' && Number.isFinite(rating) ? Math.min(5, Math.max(0, rating)) : undefined;
+
     const updated = await prisma.golfCourse.update({
       where: { id },
       data: {
@@ -167,6 +175,7 @@ export async function PATCH(request: Request) {
         ...(typeof description === 'string' || description === null ? { description } : {}),
         ...(normalizedFeatures ? { features: normalizedFeatures } : {}),
         ...(normalizedImages ? { images: normalizedImages } : {}),
+        ...(normalizedRating !== undefined ? { rating: normalizedRating } : {}),
       },
     });
     return NextResponse.json(updated);
