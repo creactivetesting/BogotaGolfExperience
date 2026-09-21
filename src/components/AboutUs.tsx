@@ -57,7 +57,7 @@ export function AboutUs() {
                     className="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
                    />
                    <div className="absolute bottom-6 left-6 right-6 z-20 text-white">
-                     <p className="font-semibold text-lg">Alejandro Bernal & Felipe González</p>
+                     <p className="font-semibold text-lg">Alejandro Bernal & Luis González</p>
                      <p className="text-white/80 text-sm">Founders, Bogotá Golf Experiences</p>
                    </div>
                 </div>
@@ -96,10 +96,10 @@ export function AboutUs() {
                         <Target className="w-6 h-6 text-accent" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold mb-2">Felipe González</h3>
-                        <p className="text-muted-foreground mb-2 italic">Creative Advertiser & Tech Expert (Golfer 3+ years)</p>
+                        <h3 className="text-xl font-bold mb-2">Luis González</h3>
+                        <p className="text-muted-foreground mb-2 italic">Strategy, Brand Growth & Business Execution</p>
                         <p className="text-muted-foreground text-sm">
-                          (Shown in black shirt, white cap). Bringing a fresh perspective and technological innovation, Felipe ensures seamless, modern experiences. His creative vision drives the digital excellence of BGX.
+                          With nearly two decades shaping brands and business growth across Latin America, Luis understands that strategy is only valuable when it drives real outcomes. His approach blends sharp business thinking with practical execution, turning complexity into clear, scalable solutions.
                         </p>
                       </div>
                     </div>
