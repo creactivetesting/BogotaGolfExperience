@@ -122,7 +122,7 @@ export function AboutUs() {
                </div>
                
                <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20">
-                  <ImageWithFallback src={logo1} alt="BGX partner logo" className="h-16 md:h-20 object-contain opacity-80 hover:opacity-100 transition-opacity" loading="lazy" />
+                  <ImageWithFallback src={logo1} alt="BGX partner logo" className="h-20 md:h-24 object-contain opacity-100 hover:opacity-100 transition-opacity" loading="lazy" />
                   <ImageWithFallback src={logo2} alt="BGX partner logo" className="h-16 md:h-20 object-contain opacity-80 hover:opacity-100 transition-opacity" loading="lazy" />
                   <ImageWithFallback src={logo3} alt="BGX partner logo" className="h-16 md:h-20 object-contain opacity-80 hover:opacity-100 transition-opacity" loading="lazy" />
                   <ImageWithFallback src={logo4} alt="BGX partner logo" className="h-16 md:h-20 object-contain opacity-80 hover:opacity-100 transition-opacity" loading="lazy" />
