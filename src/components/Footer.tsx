@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
-import { Mail, Phone, MapPin, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram } from "lucide-react";
 import bgxLogo from "@/assets/optimized/bgx-logo.webp";
 
 export function Footer() {
@@ -36,18 +36,15 @@ export function Footer() {
               </div>
             </div>
             <div className="flex space-x-3">
-              <Button size="sm" variant="outline" className="p-2 hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all duration-300">
+              <a
+                href="https://www.instagram.com/bogotagolfexperience/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/30 bg-transparent text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground hover:border-accent"
+              >
                 <Instagram className="w-4 h-4" strokeWidth={1.5} />
-              </Button>
-              <Button size="sm" variant="outline" className="p-2 hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all duration-300">
-                <Facebook className="w-4 h-4" strokeWidth={1.5} />
-              </Button>
-              <Button size="sm" variant="outline" className="p-2 hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all duration-300">
-                <Youtube className="w-4 h-4" strokeWidth={1.5} />
-              </Button>
-              <Button size="sm" variant="outline" className="p-2 hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all duration-300">
-                <Twitter className="w-4 h-4" strokeWidth={1.5} />
-              </Button>
+              </a>
             </div>
           </div>
 
