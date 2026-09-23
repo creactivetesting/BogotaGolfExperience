@@ -142,6 +142,70 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     image: blog.coverImage ? [blog.coverImage] : undefined,
   };
 
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const formatInlineMarkdown = (value: string) => {
+    let formatted = escapeHtml(value);
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    formatted = formatted.replace(/_(.+?)_/g, '<em>$1</em>');
+    formatted = formatted.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+    return formatted.replace(/\n/g, '<br />');
+  };
+
+  const contentHtml = (() => {
+    const trimmed = blog.content.trim();
+
+    if (!trimmed) {
+      return '';
+    }
+
+    if (/<[a-z][\s\S]*>/i.test(trimmed)) {
+      return trimmed;
+    }
+
+    return trimmed
+      .split(/\n{2,}/)
+      .map((section) => section.trim())
+      .filter(Boolean)
+      .map((section) => {
+        const lines = section
+          .split(/\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        if (!lines.length) {
+          return '';
+        }
+
+        const firstLine = lines[0];
+
+        if (firstLine.startsWith('### ')) {
+          return `<h3>${formatInlineMarkdown(firstLine.slice(4))}</h3>`;
+        }
+
+        if (firstLine.startsWith('## ')) {
+          return `<h2>${formatInlineMarkdown(firstLine.slice(3))}</h2>`;
+        }
+
+        if (firstLine.startsWith('# ')) {
+          return `<h1>${formatInlineMarkdown(firstLine.slice(2))}</h1>`;
+        }
+
+        return lines
+          .map((line) => `<p>${formatInlineMarkdown(line)}</p>`)
+          .join('');
+      })
+      .join('');
+  })();
+
   return (
     <>
       <Header />
@@ -167,15 +231,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <h1 className="mt-3 text-3xl font-bold text-zinc-900 sm:text-4xl">{blog.title}</h1>
               <p className="mt-4 text-lg leading-8 text-zinc-600">{blog.excerpt}</p>
 
-              <div className="mt-8 space-y-5 text-base leading-8 text-zinc-800">
-                {blog.content
-                  .split('\n')
-                  .map((paragraph) => paragraph.trim())
-                  .filter(Boolean)
-                  .map((paragraph, index) => (
-                    <p key={`${blog.id}-paragraph-${index}`}>{paragraph}</p>
-                  ))}
-              </div>
+              <div
+                className="mt-8 prose prose-zinc max-w-none text-base leading-8 text-zinc-800 [&_p]:mb-5 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_a]:text-emerald-700 [&_a:hover]:underline"
+                dangerouslySetInnerHTML={{ __html: contentHtml }}
+              />
             </div>
           </div>
         </article>

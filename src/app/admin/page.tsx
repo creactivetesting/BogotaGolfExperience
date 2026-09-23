@@ -3015,9 +3015,15 @@ export default function AdminPage() {
                     value={blogContent}
                     onChange={(event) => setBlogContent(event.target.value)}
                     className="min-h-[240px] w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none transition focus:border-zinc-500"
-                    placeholder="Write the article content. Use line breaks to separate paragraphs."
+                    placeholder="# Título principal
+## Subtítulo
+
+Párrafo normal con texto de cuerpo.
+
+**Texto destacado**"
                     required
                   />
+                  <p className="mt-2 text-xs text-zinc-500">Usa # para título, ## para subtítulo, y párrafos normales para el cuerpo. También puedes usar **negrita**.</p>
                 </div>
 
                 <label className="flex items-center gap-3 text-sm font-medium text-zinc-700">
