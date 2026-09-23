@@ -45,6 +45,19 @@ export function Footer() {
               >
                 <Instagram className="w-4 h-4" strokeWidth={1.5} />
               </a>
+
+              <a
+                href="https://www.tiktok.com/@bogotagolfexperience"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/30 bg-transparent text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground hover:border-accent"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+                  <path d="M15.5 3c.5 1.9 1.8 3.2 4 3.8v2.8c-1.4-.1-2.7-.5-3.9-1.3v7.4A5.8 5.8 0 1 1 9.3 9.5v2.8A3 3 0 1 0 12.6 15V3h2.9Z" />
+                  <path d="M15.5 3c.5 1.9 1.8 3.2 4 3.8v2.8c-1.4-.1-2.7-.5-3.9-1.3v7.4A5.8 5.8 0 1 1 9.3 9.5v2.8A3 3 0 1 0 12.6 15V3h2.9Z" opacity="0.35" />
+                </svg>
+              </a>
             </div>
           </div>
 
